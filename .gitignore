@@ -1,0 +1,14 @@
+*.log
+.deploy*/
+.DS_Store
+db.json
+Thumbs.db
+node_modules/
+.yarn/**
+.idea
+.idea/**
+.vscode
+.vscode/**
+target
+target/**
+

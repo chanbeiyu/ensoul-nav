@@ -35,3 +35,19 @@ TwoNav 是一款开源免费的书签（导航）管理程序，使用PHP + SQLi
 
 ![](https://foruda.gitee.com/images/1680680754989095293/fcc56e76_10359480.jpeg "主页预览")
 ![](https://foruda.gitee.com/images/1680680836189756220/8c227c34_10359480.jpeg "主题模板")
+
+
+1. 添加上游仓库
+`git remote add upstream https://github.com/ORIGINAL_OWNER/ORIGINAL_REPOSITORY.git`
+
+2. 查看关联情况
+`git remote -v`
+
+3. 拉取上游变动
+`git fetch upstream`
+
+3. 合并（这一步也可以使用 merge）
+`git rebase upstream/master`
+
+4. 更新自己远端仓库分支
+`git push origin master`
