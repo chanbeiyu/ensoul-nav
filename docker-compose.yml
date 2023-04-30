@@ -10,8 +10,8 @@ services:
       - "9000:9000"
     volumes:
       - './:/app'
+      # - '${WEBAPP_STORAGE_HOME}/:/app'
     environment:
       TZ: Asia/Shanghai
-
 
 # https://gitee.com/tznb/TwoNav
