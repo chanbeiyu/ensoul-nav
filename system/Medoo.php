@@ -1,34 +1,39 @@
 <?php
 declare(strict_types=1);
+
 namespace Medoo;
-use PDO;
+
 use Exception;
+use InvalidArgumentException;
+use PDO;
 use PDOException;
 use PDOStatement;
-use InvalidArgumentException;
+
 class Raw
 {
     public $map;
     public $value;
 }
+
 class Medoo
 {
     public $pdo;
     public $type;
+    public $queryString;
+    public $returnId = '';
+    public $error = null;
+    public $errorInfo = null;
     protected $prefix;
     protected $statement;
     protected $dsn;
     protected $logs = [];
     protected $logging = false;
     protected $testMode = false;
-    public $queryString;
     protected $debugMode = false;
     protected $debugLogging = false;
     protected $debugLogs = [];
     protected $guid = 0;
-    public $returnId = '';
-    public $error = null;
-    public $errorInfo = null;
+
     public function __construct(array $options)
     {
         if (isset($options['prefix'])) {
@@ -217,8 +222,8 @@ class Medoo
         ) {
             $commands[] = "SET NAMES '{$options['charset']}'" . (
                 $this->type === 'mysql' && isset($options['collation']) ?
-                " COLLATE '{$options['collation']}'" : ''
-            );
+                    " COLLATE '{$options['collation']}'" : ''
+                );
         }
         $this->dsn = $dsn;
         try {
@@ -236,8 +241,8 @@ class Medoo
                         PDO::ERRMODE_WARNING,
                         PDO::ERRMODE_EXCEPTION
                     ]) ?
-                    $options['error'] :
-                    PDO::ERRMODE_SILENT
+                        $options['error'] :
+                        PDO::ERRMODE_SILENT
                 );
             }
             if (isset($options['command']) && is_array($options['command'])) {
@@ -250,16 +255,7 @@ class Medoo
             throw new PDOException($e->getMessage());
         }
     }
-    protected function mapKey(): string
-    {
-        return ':MeD' . $this->guid++ . '_mK';
-    }
-    public function query(string $statement, array $map = []): ?PDOStatement
-    {
-        $raw = $this->raw($statement, $map);
-        $statement = $this->buildRaw($raw, $map);
-        return $this->exec($statement, $map);
-    }
+
     public function exec(string $statement, array $map = [], callable $callback = null): ?PDOStatement
     {
         $this->statement = null;
@@ -312,6 +308,7 @@ class Medoo
         }
         return $statement;
     }
+
     protected function generate(string $statement, array $map): string
     {
         $identifier = [
@@ -337,17 +334,150 @@ class Medoo
         }
         return $statement;
     }
-    public static function raw(string $string, array $map = []): Raw
+
+    public function quote(string $string): string
     {
-        $raw = new Raw();
-        $raw->map = $map;
-        $raw->value = $string;
-        return $raw;
+        if ($this->type === 'mysql') {
+            return "'" . preg_replace(['/([\'"])/', '/(\\\\\\\")/'], ["\\\\\${1}", '\\\${1}'], $string) . "'";
+        }
+        return "'" . preg_replace('/\'/', '\'\'', $string) . "'";
     }
-    protected function isRaw($object): bool
+
+    public function create(string $table, $columns, $options = null): ?PDOStatement
     {
-        return $object instanceof Raw;
+        $stack = [];
+        $tableOption = '';
+        $tableName = $this->tableQuote($table);
+        foreach ($columns as $name => $definition) {
+            if (is_int($name)) {
+                $stack[] = preg_replace('/\<([\p{L}_][\p{L}\p{N}@$#\-_]*)\>/u', '"$1"', $definition);
+            } elseif (is_array($definition)) {
+                $stack[] = $this->columnQuote($name) . ' ' . implode(' ', $definition);
+            } elseif (is_string($definition)) {
+                $stack[] = $this->columnQuote($name) . ' ' . $definition;
+            }
+        }
+        if (is_array($options)) {
+            $optionStack = [];
+            foreach ($options as $key => $value) {
+                if (is_string($value) || is_int($value)) {
+                    $optionStack[] = "{$key} = {$value}";
+                }
+            }
+            $tableOption = ' ' . implode(', ', $optionStack);
+        } elseif (is_string($options)) {
+            $tableOption = ' ' . $options;
+        }
+        $command = 'CREATE TABLE';
+        if (in_array($this->type, ['mysql', 'pgsql', 'sqlite'])) {
+            $command .= ' IF NOT EXISTS';
+        }
+        return $this->exec("{$command} {$tableName} (" . implode(', ', $stack) . "){$tableOption}");
     }
+
+    public function tableQuote(string $table): string
+    {
+        if (preg_match('/^[\p{L}_][\p{L}\p{N}@$#\-_]*$/u', $table)) {
+            return '"' . $this->prefix . $table . '"';
+        }
+        throw new InvalidArgumentException("Incorrect table name: {$table}.");
+    }
+
+    public function columnQuote(string $column): string
+    {
+        if (preg_match('/^[\p{L}_][\p{L}\p{N}@$#\-_]*(\.?[\p{L}_][\p{L}\p{N}@$#\-_]*)?$/u', $column)) {
+            return strpos($column, '.') !== false ?
+                '"' . $this->prefix . str_replace('.', '"."', $column) . '"' :
+                '"' . $column . '"';
+        }
+        throw new InvalidArgumentException("Incorrect column name: {$column}.");
+    }
+
+    public function drop(string $table): ?PDOStatement
+    {
+        return $this->exec('DROP TABLE IF EXISTS ' . $this->tableQuote($table));
+    }
+
+    public function insert(string $table, array $values, string $primaryKey = null): ?PDOStatement
+    {
+        $stack = [];
+        $columns = [];
+        $fields = [];
+        $map = [];
+        $returnings = [];
+        if (!isset($values[0])) {
+            $values = [$values];
+        }
+        foreach ($values as $data) {
+            foreach ($data as $key => $value) {
+                $columns[] = $key;
+            }
+        }
+        $columns = array_unique($columns);
+        foreach ($values as $data) {
+            $values = [];
+            foreach ($columns as $key) {
+                $value = $data[$key];
+                $type = gettype($value);
+                if ($this->type === 'oracle' && $type === 'resource') {
+                    $values[] = 'EMPTY_BLOB()';
+                    $returnings[$this->mapKey()] = [$key, $value, PDO::PARAM_LOB];
+                    continue;
+                }
+                if ($raw = $this->buildRaw($data[$key], $map)) {
+                    $values[] = $raw;
+                    continue;
+                }
+                $mapKey = $this->mapKey();
+                $values[] = $mapKey;
+                switch ($type) {
+                    case 'array':
+                        $map[$mapKey] = [
+                            strpos($key, '[JSON]') === strlen($key) - 6 ?
+                                json_encode($value) :
+                                serialize($value),
+                            PDO::PARAM_STR
+                        ];
+                        break;
+                    case 'object':
+                        $value = serialize($value);
+                        break;
+                    case 'NULL':
+                    case 'resource':
+                    case 'boolean':
+                    case 'integer':
+                    case 'double':
+                    case 'string':
+                        $map[$mapKey] = $this->typeMap($value, $type);
+                        break;
+                }
+            }
+            $stack[] = '(' . implode(', ', $values) . ')';
+        }
+        foreach ($columns as $key) {
+            $fields[] = $this->columnQuote(preg_replace("/(\s*\[JSON\]$)/i", '', $key));
+        }
+        $query = 'INSERT INTO ' . $this->tableQuote($table) . ' (' . implode(', ', $fields) . ') VALUES ' . implode(', ', $stack);
+        if (
+            $this->type === 'oracle' && (!empty($returnings) || isset($primaryKey))
+        ) {
+            if ($primaryKey) {
+                $returnings[':RETURNID'] = [$primaryKey, '', PDO::PARAM_INT, 8];
+            }
+            $statement = $this->returningQuery($query, $map, $returnings);
+            if ($primaryKey) {
+                $this->returnId = $returnings[':RETURNID'][1];
+            }
+            return $statement;
+        }
+        return $this->exec($query, $map);
+    }
+
+    protected function mapKey(): string
+    {
+        return ':MeD' . $this->guid++ . '_mK';
+    }
+
     protected function buildRaw($raw, array &$map): ?string
     {
         if (!$this->isRaw($raw)) {
@@ -374,29 +504,12 @@ class Medoo
         }
         return $query;
     }
-    public function quote(string $string): string
+
+    protected function isRaw($object): bool
     {
-        if ($this->type === 'mysql') {
-            return "'" . preg_replace(['/([\'"])/', '/(\\\\\\\")/'], ["\\\\\${1}", '\\\${1}'], $string) . "'";
-        }
-        return "'" . preg_replace('/\'/', '\'\'', $string) . "'";
+        return $object instanceof Raw;
     }
-    public function tableQuote(string $table): string
-    {
-        if (preg_match('/^[\p{L}_][\p{L}\p{N}@$#\-_]*$/u', $table)) {
-            return '"' . $this->prefix . $table . '"';
-        }
-        throw new InvalidArgumentException("Incorrect table name: {$table}.");
-    }
-    public function columnQuote(string $column): string
-    {
-        if (preg_match('/^[\p{L}_][\p{L}\p{N}@$#\-_]*(\.?[\p{L}_][\p{L}\p{N}@$#\-_]*)?$/u', $column)) {
-            return strpos($column, '.') !== false ?
-                '"' . $this->prefix . str_replace('.', '"."', $column) . '"' :
-                '"' . $column . '"';
-        }
-        throw new InvalidArgumentException("Incorrect column name: {$column}.");
-    }
+
     protected function typeMap($value, string $type): array
     {
         $map = [
@@ -415,53 +528,197 @@ class Medoo
         }
         return [$value, $map[$type]];
     }
-    protected function columnPush(&$columns, array &$map, bool $root, bool $isJoin = false): string
+
+    private function returningQuery($query, &$map, &$data): ?PDOStatement
     {
-        if ($columns === '*') {
-            return $columns;
-        }
-        $stack = [];
-        $hasDistinct = false;
-        if (is_string($columns)) {
-            $columns = [$columns];
-        }
-        foreach ($columns as $key => $value) {
-            $isIntKey = is_int($key);
-            $isArrayValue = is_array($value);
-            if (!$isIntKey && $isArrayValue && $root && count(array_keys($columns)) === 1) {
-                $stack[] = $this->columnQuote($key);
-                $stack[] = $this->columnPush($value, $map, false, $isJoin);
-            } elseif ($isArrayValue) {
-                $stack[] = $this->columnPush($value, $map, false, $isJoin);
-            } elseif (!$isIntKey && $raw = $this->buildRaw($value, $map)) {
-                preg_match('/(?<column>[\p{L}_][\p{L}\p{N}@$#\-_\.]*)(\s*\[(?<type>(String|Bool|Int|Number))\])?/u', $key, $match);
-                $stack[] = "{$raw} AS {$this->columnQuote($match['column'])}";
-            } elseif ($isIntKey && is_string($value)) {
-                if ($isJoin && strpos($value, '*') !== false) {
-                    throw new InvalidArgumentException('Cannot use table.* to select all columns while joining table.');
-                }
-                preg_match('/(?<column>[\p{L}_][\p{L}\p{N}@$#\-_\.]*)(?:\s*\((?<alias>[\p{L}_][\p{L}\p{N}@$#\-_]*)\))?(?:\s*\[(?<type>(?:String|Bool|Int|Number|Object|JSON))\])?/u', $value, $match);
-                $columnString = '';
-                if (!empty($match['alias'])) {
-                    $columnString = "{$this->columnQuote($match['column'])} AS {$this->columnQuote($match['alias'])}";
-                    $columns[$key] = $match['alias'];
-                    if (!empty($match['type'])) {
-                        $columns[$key] .= ' [' . $match['type'] . ']';
-                    }
+        $returnColumns = array_map(
+            function ($value) {
+                return $value[0];
+            },
+            $data
+        );
+        $query .= ' RETURNING ' .
+            implode(', ', array_map([$this, 'columnQuote'], $returnColumns)) .
+            ' INTO ' .
+            implode(', ', array_keys($data));
+        return $this->exec($query, $map, function ($statement) use (&$data) {
+            // @codeCoverageIgnoreStart
+            foreach ($data as $key => $return) {
+                if (isset($return[3])) {
+                    $statement->bindParam($key, $data[$key][1], $return[2], $return[3]);
                 } else {
-                    $columnString = $this->columnQuote($match['column']);
+                    $statement->bindParam($key, $data[$key][1], $return[2]);
                 }
-                if (!$hasDistinct && strpos($value, '@') === 0) {
-                    $columnString = 'DISTINCT ' . $columnString;
-                    $hasDistinct = true;
-                    array_unshift($stack, $columnString);
-                    continue;
+            }
+            // @codeCoverageIgnoreEnd
+        });
+    }
+
+    public function update(string $table, $data, $where = null): ?PDOStatement
+    {
+        $fields = [];
+        $map = [];
+        $returnings = [];
+        foreach ($data as $key => $value) {
+            $column = $this->columnQuote(preg_replace("/(\s*\[(JSON|\+|\-|\*|\/)\]$)/", '', $key));
+            $type = gettype($value);
+            if ($this->type === 'oracle' && $type === 'resource') {
+                $fields[] = "{$column} = EMPTY_BLOB()";
+                $returnings[$this->mapKey()] = [$key, $value, PDO::PARAM_LOB];
+                continue;
+            }
+            if ($raw = $this->buildRaw($value, $map)) {
+                $fields[] = "{$column} = {$raw}";
+                continue;
+            }
+            preg_match('/(?<column>[\p{L}_][\p{L}\p{N}@$#\-_]*)(\[(?<operator>\+|\-|\*|\/)\])?/u', $key, $match);
+            if (isset($match['operator'])) {
+                if (is_numeric($value)) {
+                    $fields[] = "{$column} = {$column} {$match['operator']} {$value}";
                 }
-                $stack[] = $columnString;
+            } else {
+                $mapKey = $this->mapKey();
+                $fields[] = "{$column} = {$mapKey}";
+                switch ($type) {
+                    case 'array':
+                        $map[$mapKey] = [
+                            strpos($key, '[JSON]') === strlen($key) - 6 ?
+                                json_encode($value) :
+                                serialize($value),
+                            PDO::PARAM_STR
+                        ];
+                        break;
+                    case 'object':
+                        $value = serialize($value);
+                        break;
+                    case 'NULL':
+                    case 'resource':
+                    case 'boolean':
+                    case 'integer':
+                    case 'double':
+                    case 'string':
+                        $map[$mapKey] = $this->typeMap($value, $type);
+                        break;
+                }
             }
         }
-        return implode(',', $stack);
+        $query = 'UPDATE ' . $this->tableQuote($table) . ' SET ' . implode(', ', $fields) . $this->whereClause($where, $map);
+        if ($this->type === 'oracle' && !empty($returnings)) {
+            return $this->returningQuery($query, $map, $returnings);
+        }
+        return $this->exec($query, $map);
     }
+
+    protected function whereClause($where, array &$map): string
+    {
+        $clause = '';
+        if (is_array($where)) {
+            $conditions = array_diff_key($where, array_flip(
+                ['GROUP', 'ORDER', 'HAVING', 'LIMIT', 'LIKE', 'MATCH']
+            ));
+            if (!empty($conditions)) {
+                $clause = ' WHERE ' . $this->dataImplode($conditions, $map, ' AND');
+            }
+            if (isset($where['MATCH']) && $this->type === 'mysql') {
+                $match = $where['MATCH'];
+                if (is_array($match) && isset($match['columns'], $match['keyword'])) {
+                    $mode = '';
+                    $options = [
+                        'natural' => 'IN NATURAL LANGUAGE MODE',
+                        'natural+query' => 'IN NATURAL LANGUAGE MODE WITH QUERY EXPANSION',
+                        'boolean' => 'IN BOOLEAN MODE',
+                        'query' => 'WITH QUERY EXPANSION'
+                    ];
+                    if (isset($match['mode'], $options[$match['mode']])) {
+                        $mode = ' ' . $options[$match['mode']];
+                    }
+                    $columns = implode(', ', array_map([$this, 'columnQuote'], $match['columns']));
+                    $mapKey = $this->mapKey();
+                    $map[$mapKey] = [$match['keyword'], PDO::PARAM_STR];
+                    $clause .= ($clause !== '' ? ' AND ' : ' WHERE') . ' MATCH (' . $columns . ') AGAINST (' . $mapKey . $mode . ')';
+                }
+            }
+            if (isset($where['GROUP'])) {
+                $group = $where['GROUP'];
+                if (is_array($group)) {
+                    $stack = [];
+                    foreach ($group as $column => $value) {
+                        $stack[] = $this->columnQuote($value);
+                    }
+                    $clause .= ' GROUP BY ' . implode(',', $stack);
+                } elseif ($raw = $this->buildRaw($group, $map)) {
+                    $clause .= ' GROUP BY ' . $raw;
+                } else {
+                    $clause .= ' GROUP BY ' . $this->columnQuote($group);
+                }
+            }
+            if (isset($where['HAVING'])) {
+                $having = $where['HAVING'];
+                if ($raw = $this->buildRaw($having, $map)) {
+                    $clause .= ' HAVING ' . $raw;
+                } else {
+                    $clause .= ' HAVING ' . $this->dataImplode($having, $map, ' AND');
+                }
+            }
+            if (isset($where['ORDER'])) {
+                $order = $where['ORDER'];
+                if (is_array($order)) {
+                    $stack = [];
+                    foreach ($order as $column => $value) {
+                        if (is_array($value)) {
+                            $valueStack = [];
+                            foreach ($value as $item) {
+                                $valueStack[] = is_int($item) ? $item : $this->quote($item);
+                            }
+                            $valueString = implode(',', $valueStack);
+                            $stack[] = "FIELD({$this->columnQuote($column)}, {$valueString})";
+                        } elseif ($value === 'ASC' || $value === 'DESC') {
+                            $stack[] = $this->columnQuote($column) . ' ' . $value;
+                        } elseif (is_int($column)) {
+                            $stack[] = $this->columnQuote($value);
+                        }
+                    }
+                    $clause .= ' ORDER BY ' . implode(',', $stack);
+                } elseif ($raw = $this->buildRaw($order, $map)) {
+                    $clause .= ' ORDER BY ' . $raw;
+                } else {
+                    $clause .= ' ORDER BY ' . $this->columnQuote($order);
+                }
+            }
+            if (isset($where['LIMIT'])) {
+                $limit = $where['LIMIT'];
+                if (in_array($this->type, ['oracle', 'mssql'])) {
+                    if ($this->type === 'mssql' && !isset($where['ORDER'])) {
+                        $clause .= ' ORDER BY (SELECT 0)';
+                    }
+                    if (is_numeric($limit)) {
+                        $limit = [0, $limit];
+                    }
+                    if (
+                        is_array($limit) &&
+                        is_numeric($limit[0]) &&
+                        is_numeric($limit[1])
+                    ) {
+                        $clause .= " OFFSET {$limit[0]} ROWS FETCH NEXT {$limit[1]} ROWS ONLY";
+                    }
+                } else {
+                    if (is_numeric($limit)) {
+                        $clause .= ' LIMIT ' . $limit;
+                    } elseif (
+                        is_array($limit) &&
+                        is_numeric($limit[0]) &&
+                        is_numeric($limit[1])
+                    ) {
+                        $clause .= " LIMIT {$limit[1]} OFFSET {$limit[0]}";
+                    }
+                }
+            }
+        } elseif ($raw = $this->buildRaw($where, $map)) {
+            $clause .= ' ' . $raw;
+        }
+        return $clause;
+    }
+
     protected function dataImplode(array $data, array &$map, string $conjunctor): string
     {
         $stack = [];
@@ -600,123 +857,96 @@ class Medoo
         }
         return implode($conjunctor . ' ', $stack);
     }
-    protected function whereClause($where, array &$map): string
+
+    public function delete(string $table, $where): ?PDOStatement
     {
-        $clause = '';
-        if (is_array($where)) {
-            $conditions = array_diff_key($where, array_flip(
-                ['GROUP', 'ORDER', 'HAVING', 'LIMIT', 'LIKE', 'MATCH']
-            ));
-            if (!empty($conditions)) {
-                $clause = ' WHERE ' . $this->dataImplode($conditions, $map, ' AND');
-            }
-            if (isset($where['MATCH']) && $this->type === 'mysql') {
-                $match = $where['MATCH'];
-                if (is_array($match) && isset($match['columns'], $match['keyword'])) {
-                    $mode = '';
-                    $options = [
-                        'natural' => 'IN NATURAL LANGUAGE MODE',
-                        'natural+query' => 'IN NATURAL LANGUAGE MODE WITH QUERY EXPANSION',
-                        'boolean' => 'IN BOOLEAN MODE',
-                        'query' => 'WITH QUERY EXPANSION'
-                    ];
-                    if (isset($match['mode'], $options[$match['mode']])) {
-                        $mode = ' ' . $options[$match['mode']];
-                    }
-                    $columns = implode(', ', array_map([$this, 'columnQuote'], $match['columns']));
-                    $mapKey = $this->mapKey();
-                    $map[$mapKey] = [$match['keyword'], PDO::PARAM_STR];
-                    $clause .= ($clause !== '' ? ' AND ' : ' WHERE') . ' MATCH (' . $columns . ') AGAINST (' . $mapKey . $mode . ')';
-                }
-            }
-            if (isset($where['GROUP'])) {
-                $group = $where['GROUP'];
-                if (is_array($group)) {
-                    $stack = [];
-                    foreach ($group as $column => $value) {
-                        $stack[] = $this->columnQuote($value);
-                    }
-                    $clause .= ' GROUP BY ' . implode(',', $stack);
-                } elseif ($raw = $this->buildRaw($group, $map)) {
-                    $clause .= ' GROUP BY ' . $raw;
-                } else {
-                    $clause .= ' GROUP BY ' . $this->columnQuote($group);
-                }
-            }
-            if (isset($where['HAVING'])) {
-                $having = $where['HAVING'];
-                if ($raw = $this->buildRaw($having, $map)) {
-                    $clause .= ' HAVING ' . $raw;
-                } else {
-                    $clause .= ' HAVING ' . $this->dataImplode($having, $map, ' AND');
-                }
-            }
-            if (isset($where['ORDER'])) {
-                $order = $where['ORDER'];
-                if (is_array($order)) {
-                    $stack = [];
-                    foreach ($order as $column => $value) {
-                        if (is_array($value)) {
-                            $valueStack = [];
-                            foreach ($value as $item) {
-                                $valueStack[] = is_int($item) ? $item : $this->quote($item);
-                            }
-                            $valueString = implode(',', $valueStack);
-                            $stack[] = "FIELD({$this->columnQuote($column)}, {$valueString})";
-                        } elseif ($value === 'ASC' || $value === 'DESC') {
-                            $stack[] = $this->columnQuote($column) . ' ' . $value;
-                        } elseif (is_int($column)) {
-                            $stack[] = $this->columnQuote($value);
-                        }
-                    }
-                    $clause .= ' ORDER BY ' . implode(',', $stack);
-                } elseif ($raw = $this->buildRaw($order, $map)) {
-                    $clause .= ' ORDER BY ' . $raw;
-                } else {
-                    $clause .= ' ORDER BY ' . $this->columnQuote($order);
-                }
-            }
-            if (isset($where['LIMIT'])) {
-                $limit = $where['LIMIT'];
-                if (in_array($this->type, ['oracle', 'mssql'])) {
-                    if ($this->type === 'mssql' && !isset($where['ORDER'])) {
-                        $clause .= ' ORDER BY (SELECT 0)';
-                    }
-                    if (is_numeric($limit)) {
-                        $limit = [0, $limit];
-                    }
-                    if (
-                        is_array($limit) &&
-                        is_numeric($limit[0]) &&
-                        is_numeric($limit[1])
-                    ) {
-                        $clause .= " OFFSET {$limit[0]} ROWS FETCH NEXT {$limit[1]} ROWS ONLY";
-                    }
-                } else {
-                    if (is_numeric($limit)) {
-                        $clause .= ' LIMIT ' . $limit;
-                    } elseif (
-                        is_array($limit) &&
-                        is_numeric($limit[0]) &&
-                        is_numeric($limit[1])
-                    ) {
-                        $clause .= " LIMIT {$limit[1]} OFFSET {$limit[0]}";
-                    }
-                }
-            }
-        } elseif ($raw = $this->buildRaw($where, $map)) {
-            $clause .= ' ' . $raw;
-        }
-        return $clause;
+        $map = [];
+        return $this->exec('DELETE FROM ' . $this->tableQuote($table) . $this->whereClause($where, $map), $map);
     }
+
+    public function replace(string $table, array $columns, $where = null): ?PDOStatement
+    {
+        $map = [];
+        $stack = [];
+        foreach ($columns as $column => $replacements) {
+            if (is_array($replacements)) {
+                foreach ($replacements as $old => $new) {
+                    $mapKey = $this->mapKey();
+                    $columnName = $this->columnQuote($column);
+                    $stack[] = "{$columnName} = REPLACE({$columnName}, {$mapKey}a, {$mapKey}b)";
+                    $map[$mapKey . 'a'] = [$old, PDO::PARAM_STR];
+                    $map[$mapKey . 'b'] = [$new, PDO::PARAM_STR];
+                }
+            }
+        }
+        if (empty($stack)) {
+            throw new InvalidArgumentException('Invalid columns supplied.');
+        }
+        return $this->exec('UPDATE ' . $this->tableQuote($table) . ' SET ' . implode(', ', $stack) . $this->whereClause($where, $map), $map);
+    }
+
+    public function get(string $table, $join = null, $columns = null, $where = null)
+    {
+        $map = [];
+        $result = [];
+        $columnMap = [];
+        $currentStack = [];
+        if ($where === null) {
+            if ($this->isJoin($join)) {
+                $where['LIMIT'] = 1;
+            } else {
+                $columns['LIMIT'] = 1;
+            }
+            $column = $join;
+        } else {
+            $column = $columns;
+            $where['LIMIT'] = 1;
+        }
+        $isSingle = (is_string($column) && $column !== '*');
+        $query = $this->exec($this->selectContext($table, $map, $join, $columns, $where), $map);
+        if (!$this->statement) {
+            return false;
+        }
+        // @codeCoverageIgnoreStart
+        $data = $query->fetchAll(PDO::FETCH_ASSOC);
+        if (isset($data[0])) {
+            if ($column === '*') {
+                return $data[0];
+            }
+            $this->columnMap($columns, $columnMap, true);
+            $this->dataMap($data[0], $columns, $columnMap, $currentStack, true, $result);
+            if ($isSingle) {
+                return $result[0][$columnMap[$column][0]];
+            }
+            return $result[0];
+        }
+    }
+
+    protected function isJoin($join): bool
+    {
+        if (!is_array($join)) {
+            return false;
+        }
+        $keys = array_keys($join);
+        if (
+            isset($keys[0]) &&
+            is_string($keys[0]) &&
+            strpos($keys[0], '[') === 0
+        ) {
+            return true;
+        }
+        return false;
+    }
+
     protected function selectContext(
         string $table,
-        array &$map,
-        $join,
-        &$columns = null,
-        $where = null,
-        $columnFn = null
-    ): string {
+        array  &$map,
+               $join,
+               &$columns = null,
+               $where = null,
+               $columnFn = null
+    ): string
+    {
         preg_match('/(?<table>[\p{L}_][\p{L}\p{N}@$#\-_]*)\s*\((?<alias>[\p{L}_][\p{L}\p{N}@$#\-_]*)\)/u', $table, $tableMatch);
         if (isset($tableMatch['table'], $tableMatch['alias'])) {
             $table = $this->tableQuote($tableMatch['table']);
@@ -766,21 +996,7 @@ class Medoo
         }
         return 'SELECT ' . $column . ' FROM ' . $tableQuery . $this->whereClause($where, $map);
     }
-    protected function isJoin($join): bool
-    {
-        if (!is_array($join)) {
-            return false;
-        }
-        $keys = array_keys($join);
-        if (
-            isset($keys[0]) &&
-            is_string($keys[0]) &&
-            strpos($keys[0], '[') === 0
-        ) {
-            return true;
-        }
-        return false;
-    }
+
     protected function buildJoin(string $table, array $join, array &$map): string
     {
         $tableJoin = [];
@@ -814,9 +1030,9 @@ class Medoo
                                 $this->columnQuote($key) :
                                 // For ['column1' => 'column2']
                                 $table . '.' . $this->columnQuote($key)
-                        ) .
-                        ' = ' .
-                        $this->tableQuote($match['alias'] ?? $match['table']) . '.' . $this->columnQuote($value);
+                            ) .
+                            ' = ' .
+                            $this->tableQuote($match['alias'] ?? $match['table']) . '.' . $this->columnQuote($value);
                     }
                     $relation = 'ON ' . implode(' AND ', $joins);
                 }
@@ -831,6 +1047,57 @@ class Medoo
         }
         return implode(' ', $tableJoin);
     }
+
+    protected function columnPush(&$columns, array &$map, bool $root, bool $isJoin = false): string
+    {
+        if ($columns === '*') {
+            return $columns;
+        }
+        $stack = [];
+        $hasDistinct = false;
+        if (is_string($columns)) {
+            $columns = [$columns];
+        }
+        foreach ($columns as $key => $value) {
+            $isIntKey = is_int($key);
+            $isArrayValue = is_array($value);
+            if (!$isIntKey && $isArrayValue && $root && count(array_keys($columns)) === 1) {
+                $stack[] = $this->columnQuote($key);
+                $stack[] = $this->columnPush($value, $map, false, $isJoin);
+            } elseif ($isArrayValue) {
+                $stack[] = $this->columnPush($value, $map, false, $isJoin);
+            } elseif (!$isIntKey && $raw = $this->buildRaw($value, $map)) {
+                preg_match('/(?<column>[\p{L}_][\p{L}\p{N}@$#\-_\.]*)(\s*\[(?<type>(String|Bool|Int|Number))\])?/u', $key, $match);
+                $stack[] = "{$raw} AS {$this->columnQuote($match['column'])}";
+            } elseif ($isIntKey && is_string($value)) {
+                if ($isJoin && strpos($value, '*') !== false) {
+                    throw new InvalidArgumentException('Cannot use table.* to select all columns while joining table.');
+                }
+                preg_match('/(?<column>[\p{L}_][\p{L}\p{N}@$#\-_\.]*)(?:\s*\((?<alias>[\p{L}_][\p{L}\p{N}@$#\-_]*)\))?(?:\s*\[(?<type>(?:String|Bool|Int|Number|Object|JSON))\])?/u', $value, $match);
+                $columnString = '';
+                if (!empty($match['alias'])) {
+                    $columnString = "{$this->columnQuote($match['column'])} AS {$this->columnQuote($match['alias'])}";
+                    $columns[$key] = $match['alias'];
+                    if (!empty($match['type'])) {
+                        $columns[$key] .= ' [' . $match['type'] . ']';
+                    }
+                } else {
+                    $columnString = $this->columnQuote($match['column']);
+                }
+                if (!$hasDistinct && strpos($value, '@') === 0) {
+                    $columnString = 'DISTINCT ' . $columnString;
+                    $hasDistinct = true;
+                    array_unshift($stack, $columnString);
+                    continue;
+                }
+                $stack[] = $columnString;
+            }
+        }
+        return implode(',', $stack);
+    }
+
+    // @codeCoverageIgnoreEnd
+
     protected function columnMap($columns, array &$stack, bool $root): array
     {
         if ($columns === '*') {
@@ -860,14 +1127,16 @@ class Medoo
         }
         return $stack;
     }
+
     protected function dataMap(
         array $data,
         array $columns,
         array $columnMap,
         array &$stack,
-        bool $root,
+        bool  $root,
         array &$result = null
-    ): void {
+    ): void
+    {
         if ($root) {
             $columnsKey = array_keys($columns);
             if (count($columnsKey) === 1 && is_array($columns[$columnsKey[0]])) {
@@ -910,13 +1179,13 @@ class Medoo
                     }
                     switch ($map[1]) {
                         case 'Number':
-                            $stack[$columnKey] = (float) $item;
+                            $stack[$columnKey] = (float)$item;
                             break;
                         case 'Int':
-                            $stack[$columnKey] = (int) $item;
+                            $stack[$columnKey] = (int)$item;
                             break;
                         case 'Bool':
-                            $stack[$columnKey] = (bool) $item;
+                            $stack[$columnKey] = (bool)$item;
                             break;
                         case 'Object':
                             $stack[$columnKey] = unserialize($item);
@@ -938,65 +1207,54 @@ class Medoo
             }
         }
     }
-    private function returningQuery($query, &$map, &$data): ?PDOStatement
+
+    public function has(string $table, $join, $where = null): bool
     {
-        $returnColumns = array_map(
-            function ($value) {
-                return $value[0];
-            },
-            $data
+        $map = [];
+        $column = null;
+        $query = $this->exec(
+            $this->type === 'mssql' ?
+                $this->selectContext($table, $map, $join, $column, $where, Medoo::raw('TOP 1 1')) :
+                'SELECT EXISTS(' . $this->selectContext($table, $map, $join, $column, $where, 1) . ')',
+            $map
         );
-        $query .= ' RETURNING ' .
-                    implode(', ', array_map([$this, 'columnQuote'], $returnColumns)) .
-                    ' INTO ' .
-                    implode(', ', array_keys($data));
-        return $this->exec($query, $map, function ($statement) use (&$data) {
-            // @codeCoverageIgnoreStart
-            foreach ($data as $key => $return) {
-                if (isset($return[3])) {
-                    $statement->bindParam($key, $data[$key][1], $return[2], $return[3]);
-                } else {
-                    $statement->bindParam($key, $data[$key][1], $return[2]);
-                }
-            }
-            // @codeCoverageIgnoreEnd
-        });
+        if (!$this->statement) {
+            return false;
+        }
+        // @codeCoverageIgnoreStart
+        $result = $query->fetchColumn();
+        return $result === '1' || $result === 1 || $result === true;
     }
-    public function create(string $table, $columns, $options = null): ?PDOStatement
+
+    public static function raw(string $string, array $map = []): Raw
     {
-        $stack = [];
-        $tableOption = '';
-        $tableName = $this->tableQuote($table);
-        foreach ($columns as $name => $definition) {
-            if (is_int($name)) {
-                $stack[] = preg_replace('/\<([\p{L}_][\p{L}\p{N}@$#\-_]*)\>/u', '"$1"', $definition);
-            } elseif (is_array($definition)) {
-                $stack[] = $this->columnQuote($name) . ' ' . implode(' ', $definition);
-            } elseif (is_string($definition)) {
-                $stack[] = $this->columnQuote($name) . ' ' . $definition;
-            }
-        }
-        if (is_array($options)) {
-            $optionStack = [];
-            foreach ($options as $key => $value) {
-                if (is_string($value) || is_int($value)) {
-                    $optionStack[] = "{$key} = {$value}";
-                }
-            }
-            $tableOption = ' ' . implode(', ', $optionStack);
-        } elseif (is_string($options)) {
-            $tableOption = ' ' . $options;
-        }
-        $command = 'CREATE TABLE';
-        if (in_array($this->type, ['mysql', 'pgsql', 'sqlite'])) {
-            $command .= ' IF NOT EXISTS';
-        }
-        return $this->exec("{$command} {$tableName} (" . implode(', ', $stack) . "){$tableOption}");
+        $raw = new Raw();
+        $raw->map = $map;
+        $raw->value = $string;
+        return $raw;
     }
-    public function drop(string $table): ?PDOStatement
+
+    public function rand(string $table, $join = null, $columns = null, $where = null): array
     {
-        return $this->exec('DROP TABLE IF EXISTS ' . $this->tableQuote($table));
+        $orderRaw = $this->raw(
+            $this->type === 'mysql' ? 'RAND()'
+                : ($this->type === 'mssql' ? 'NEWID()'
+                : 'RANDOM()')
+        );
+        if ($where === null) {
+            if ($this->isJoin($join)) {
+                $where['ORDER'] = $orderRaw;
+            } else {
+                $columns['ORDER'] = $orderRaw;
+            }
+        } else {
+            $where['ORDER'] = $orderRaw;
+        }
+        return $this->select($table, $join, $columns, $where);
     }
+
+    // @codeCoverageIgnoreEnd
+
     public function select(string $table, $join, $columns = null, $where = null): ?array
     {
         $map = [];
@@ -1030,8 +1288,8 @@ class Medoo
                 $this->dataMap($data, $columns, $columnMap, $currentStack, true);
                 $callback(
                     $isSingle ?
-                    $currentStack[$columnMap[$column][0]] :
-                    $currentStack
+                        $currentStack[$columnMap[$column][0]] :
+                        $currentStack
                 );
             } else {
                 $this->dataMap($data, $columns, $columnMap, $currentStack, true, $result);
@@ -1050,233 +1308,14 @@ class Medoo
         }
         return $result;
     }
+
     // @codeCoverageIgnoreEnd
-    public function insert(string $table, array $values, string $primaryKey = null): ?PDOStatement
+
+    public function count(string $table, $join = null, $column = null, $where = null): ?int
     {
-        $stack = [];
-        $columns = [];
-        $fields = [];
-        $map = [];
-        $returnings = [];
-        if (!isset($values[0])) {
-            $values = [$values];
-        }
-        foreach ($values as $data) {
-            foreach ($data as $key => $value) {
-                $columns[] = $key;
-            }
-        }
-        $columns = array_unique($columns);
-        foreach ($values as $data) {
-            $values = [];
-            foreach ($columns as $key) {
-                $value = $data[$key];
-                $type = gettype($value);
-                if ($this->type === 'oracle' && $type === 'resource') {
-                    $values[] = 'EMPTY_BLOB()';
-                    $returnings[$this->mapKey()] = [$key, $value, PDO::PARAM_LOB];
-                    continue;
-                }
-                if ($raw = $this->buildRaw($data[$key], $map)) {
-                    $values[] = $raw;
-                    continue;
-                }
-                $mapKey = $this->mapKey();
-                $values[] = $mapKey;
-                switch ($type) {
-                    case 'array':
-                        $map[$mapKey] = [
-                            strpos($key, '[JSON]') === strlen($key) - 6 ?
-                                json_encode($value) :
-                                serialize($value),
-                            PDO::PARAM_STR
-                        ];
-                        break;
-                    case 'object':
-                        $value = serialize($value);
-                        break;
-                    case 'NULL':
-                    case 'resource':
-                    case 'boolean':
-                    case 'integer':
-                    case 'double':
-                    case 'string':
-                        $map[$mapKey] = $this->typeMap($value, $type);
-                        break;
-                }
-            }
-            $stack[] = '(' . implode(', ', $values) . ')';
-        }
-        foreach ($columns as $key) {
-            $fields[] = $this->columnQuote(preg_replace("/(\s*\[JSON\]$)/i", '', $key));
-        }
-        $query = 'INSERT INTO ' . $this->tableQuote($table) . ' (' . implode(', ', $fields) . ') VALUES ' . implode(', ', $stack);
-        if (
-            $this->type === 'oracle' && (!empty($returnings) || isset($primaryKey))
-        ) {
-            if ($primaryKey) {
-                $returnings[':RETURNID'] = [$primaryKey, '', PDO::PARAM_INT, 8];
-            }
-            $statement = $this->returningQuery($query, $map, $returnings);
-            if ($primaryKey) {
-                $this->returnId = $returnings[':RETURNID'][1];
-            }
-            return $statement;
-        }
-        return $this->exec($query, $map);
+        return (int)$this->aggregate('COUNT', $table, $join, $column, $where);
     }
-    public function update(string $table, $data, $where = null): ?PDOStatement
-    {
-        $fields = [];
-        $map = [];
-        $returnings = [];
-        foreach ($data as $key => $value) {
-            $column = $this->columnQuote(preg_replace("/(\s*\[(JSON|\+|\-|\*|\/)\]$)/", '', $key));
-            $type = gettype($value);
-            if ($this->type === 'oracle' && $type === 'resource') {
-                $fields[] = "{$column} = EMPTY_BLOB()";
-                $returnings[$this->mapKey()] = [$key, $value, PDO::PARAM_LOB];
-                continue;
-            }
-            if ($raw = $this->buildRaw($value, $map)) {
-                $fields[] = "{$column} = {$raw}";
-                continue;
-            }
-            preg_match('/(?<column>[\p{L}_][\p{L}\p{N}@$#\-_]*)(\[(?<operator>\+|\-|\*|\/)\])?/u', $key, $match);
-            if (isset($match['operator'])) {
-                if (is_numeric($value)) {
-                    $fields[] = "{$column} = {$column} {$match['operator']} {$value}";
-                }
-            } else {
-                $mapKey = $this->mapKey();
-                $fields[] = "{$column} = {$mapKey}";
-                switch ($type) {
-                    case 'array':
-                        $map[$mapKey] = [
-                            strpos($key, '[JSON]') === strlen($key) - 6 ?
-                                json_encode($value) :
-                                serialize($value),
-                            PDO::PARAM_STR
-                        ];
-                        break;
-                    case 'object':
-                        $value = serialize($value);
-                        break;
-                    case 'NULL':
-                    case 'resource':
-                    case 'boolean':
-                    case 'integer':
-                    case 'double':
-                    case 'string':
-                        $map[$mapKey] = $this->typeMap($value, $type);
-                        break;
-                }
-            }
-        }
-        $query = 'UPDATE ' . $this->tableQuote($table) . ' SET ' . implode(', ', $fields) . $this->whereClause($where, $map);
-        if ($this->type === 'oracle' && !empty($returnings)) {
-            return $this->returningQuery($query, $map, $returnings);
-        }
-        return $this->exec($query, $map);
-    }
-    public function delete(string $table, $where): ?PDOStatement
-    {
-        $map = [];
-        return $this->exec('DELETE FROM ' . $this->tableQuote($table) . $this->whereClause($where, $map), $map);
-    }
-    public function replace(string $table, array $columns, $where = null): ?PDOStatement
-    {
-        $map = [];
-        $stack = [];
-        foreach ($columns as $column => $replacements) {
-            if (is_array($replacements)) {
-                foreach ($replacements as $old => $new) {
-                    $mapKey = $this->mapKey();
-                    $columnName = $this->columnQuote($column);
-                    $stack[] = "{$columnName} = REPLACE({$columnName}, {$mapKey}a, {$mapKey}b)";
-                    $map[$mapKey . 'a'] = [$old, PDO::PARAM_STR];
-                    $map[$mapKey . 'b'] = [$new, PDO::PARAM_STR];
-                }
-            }
-        }
-        if (empty($stack)) {
-            throw new InvalidArgumentException('Invalid columns supplied.');
-        }
-        return $this->exec('UPDATE ' . $this->tableQuote($table) . ' SET ' . implode(', ', $stack) . $this->whereClause($where, $map), $map);
-    }
-    public function get(string $table, $join = null, $columns = null, $where = null)
-    {
-        $map = [];
-        $result = [];
-        $columnMap = [];
-        $currentStack = [];
-        if ($where === null) {
-            if ($this->isJoin($join)) {
-                $where['LIMIT'] = 1;
-            } else {
-                $columns['LIMIT'] = 1;
-            }
-            $column = $join;
-        } else {
-            $column = $columns;
-            $where['LIMIT'] = 1;
-        }
-        $isSingle = (is_string($column) && $column !== '*');
-        $query = $this->exec($this->selectContext($table, $map, $join, $columns, $where), $map);
-        if (!$this->statement) {
-            return false;
-        }
-        // @codeCoverageIgnoreStart
-        $data = $query->fetchAll(PDO::FETCH_ASSOC);
-        if (isset($data[0])) {
-            if ($column === '*') {
-                return $data[0];
-            }
-            $this->columnMap($columns, $columnMap, true);
-            $this->dataMap($data[0], $columns, $columnMap, $currentStack, true, $result);
-            if ($isSingle) {
-                return $result[0][$columnMap[$column][0]];
-            }
-            return $result[0];
-        }
-    }
-    // @codeCoverageIgnoreEnd
-    public function has(string $table, $join, $where = null): bool
-    {
-        $map = [];
-        $column = null;
-        $query = $this->exec(
-            $this->type === 'mssql' ?
-                $this->selectContext($table, $map, $join, $column, $where, Medoo::raw('TOP 1 1')) :
-                'SELECT EXISTS(' . $this->selectContext($table, $map, $join, $column, $where, 1) . ')',
-            $map
-        );
-        if (!$this->statement) {
-            return false;
-        }
-        // @codeCoverageIgnoreStart
-        $result = $query->fetchColumn();
-        return $result === '1' || $result === 1 || $result === true;
-    }
-    // @codeCoverageIgnoreEnd
-    public function rand(string $table, $join = null, $columns = null, $where = null): array
-    {
-        $orderRaw = $this->raw(
-            $this->type === 'mysql' ? 'RAND()'
-                : ($this->type === 'mssql' ? 'NEWID()'
-                : 'RANDOM()')
-        );
-        if ($where === null) {
-            if ($this->isJoin($join)) {
-                $where['ORDER'] = $orderRaw;
-            } else {
-                $columns['ORDER'] = $orderRaw;
-            }
-        } else {
-            $where['ORDER'] = $orderRaw;
-        }
-        return $this->select($table, $join, $columns, $where);
-    }
+
     private function aggregate(string $type, string $table, $join = null, $column = null, $where = null): ?string
     {
         $map = [];
@@ -1285,29 +1324,31 @@ class Medoo
             return null;
         }
         // @codeCoverageIgnoreStart
-        return (string) $query->fetchColumn();
+        return (string)$query->fetchColumn();
     }
+
     // @codeCoverageIgnoreEnd
-    public function count(string $table, $join = null, $column = null, $where = null): ?int
-    {
-        return (int) $this->aggregate('COUNT', $table, $join, $column, $where);
-    }
+
     public function avg(string $table, $join, $column = null, $where = null): ?string
     {
         return $this->aggregate('AVG', $table, $join, $column, $where);
     }
+
     public function max(string $table, $join, $column = null, $where = null): ?string
     {
         return $this->aggregate('MAX', $table, $join, $column, $where);
     }
+
     public function min(string $table, $join, $column = null, $where = null): ?string
     {
         return $this->aggregate('MIN', $table, $join, $column, $where);
     }
+
     public function sum(string $table, $join, $column = null, $where = null): ?string
     {
         return $this->aggregate('SUM', $table, $join, $column, $where);
     }
+
     public function action(callable $actions): void
     {
         if (is_callable($actions)) {
@@ -1325,6 +1366,7 @@ class Medoo
             }
         }
     }
+
     public function id(string $name = null): ?string
     {
         $type = $this->type;
@@ -1332,26 +1374,37 @@ class Medoo
             return $this->returnId;
         } elseif ($type === 'pgsql') {
             $id = $this->pdo->query('SELECT LASTVAL()')->fetchColumn();
-            return (string) $id ?: null;
+            return (string)$id ?: null;
         }
         return $this->pdo->lastInsertId($name);
     }
+
+    public function query(string $statement, array $map = []): ?PDOStatement
+    {
+        $raw = $this->raw($statement, $map);
+        $statement = $this->buildRaw($raw, $map);
+        return $this->exec($statement, $map);
+    }
+
     public function debug(): self
     {
         $this->debugMode = true;
         return $this;
     }
+
     public function beginDebug(): void
     {
         $this->debugMode = true;
         $this->debugLogging = true;
     }
+
     public function debugLog(): array
     {
         $this->debugMode = false;
         $this->debugLogging = false;
         return $this->debugLogs;
     }
+
     public function last(): ?string
     {
         if (empty($this->logs)) {
@@ -1360,6 +1413,7 @@ class Medoo
         $log = $this->logs[array_key_last($this->logs)];
         return $this->generate($log[0], $log[1]);
     }
+
     public function log(): array
     {
         return array_map(
@@ -1369,6 +1423,7 @@ class Medoo
             $this->logs
         );
     }
+
     public function info(): array
     {
         $output = [

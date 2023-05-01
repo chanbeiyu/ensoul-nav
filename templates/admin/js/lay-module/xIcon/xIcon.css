@@ -62,8 +62,10 @@
 .layui-iconpicker-body {
     padding: 6px;
 }
-.layui-iconpicker .layui-iconpicker-list-box{
+
+.layui-iconpicker .layui-iconpicker-list-box {
 }
+
 .layui-iconpicker .layui-iconpicker-list {
     background-color: #fff;
     border: 1px solid #e6e6e6;
@@ -90,7 +92,7 @@
 }
 
 .layui-iconpicker .layui-iconpicker-icon-item,
-.layui-iconpicker .layui-iconpicker-icon-item i{
+.layui-iconpicker .layui-iconpicker-icon-item i {
     transition: all 100ms;
 }
 
@@ -169,7 +171,7 @@
     display: block;
 }
 
-.layui-form-danger + .layui-iconpicker .layui-iconpicker-item{
-    border-color: #FF5722!important;
+.layui-form-danger + .layui-iconpicker .layui-iconpicker-item {
+    border-color: #FF5722 !important;
 }
 

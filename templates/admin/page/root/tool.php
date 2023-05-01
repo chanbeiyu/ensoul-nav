@@ -1,16 +1,31 @@
-<?php 
-if($USER_DB['UserGroup'] != 'root'){$content='您没有权限访问此页面'; require(DIR.'/templates/admin/page/404.php');exit;}
-$title='站长工具'; 
-if(function_exists("opcache_reset")){
+<?php
+if ($USER_DB['UserGroup'] != 'root') {
+    $content = '您没有权限访问此页面';
+    require(DIR . '/templates/admin/page/404.php');
+    exit;
+}
+$title = '站长工具';
+if (function_exists("opcache_reset")) {
     opcache_reset(); //清理PHP缓存
 }
-require(dirname(__DIR__).'/header.php');
+require(dirname(__DIR__) . '/header.php');
 ?>
 <style>
-.layui-code {
-    border: 1px solid #ff5722;
-}
-.layui-btn{border-width: 1px; border-style: solid; border-color: #FF5722!important; color: #FF5722!important;background: none;height: 30px; line-height: 30px; padding: 0 10px; font-size: 12px;}
+    .layui-code {
+        border: 1px solid #ff5722;
+    }
+
+    .layui-btn {
+        border-width: 1px;
+        border-style: solid;
+        border-color: #FF5722 !important;
+        color: #FF5722 !important;
+        background: none;
+        height: 30px;
+        line-height: 30px;
+        padding: 0 10px;
+        font-size: 12px;
+    }
 </style>
 <body>
 <div class="layuimini-container">
@@ -19,17 +34,24 @@ require(dirname(__DIR__).'/header.php');
             <button type="button" class="layui-btn copy_log">复制内容</button>
             <button type="button" class="layui-btn diagnose">一键诊断</button>
             <button type="button" class="layui-btn phpinfo">phpinfo</button>
-<?php if(preg_match('/nginx/i',$_SERVER['SERVER_SOFTWARE']) ){ ?>
-            <button type="button" class="layui-btn rewrite">生成伪静态</button>
-<?php } ?>
+            <?php if (preg_match('/nginx/i', $_SERVER['SERVER_SOFTWARE'])) { ?>
+                <button type="button" class="layui-btn rewrite">生成伪静态</button>
+            <?php } ?>
             <button type="button" class="layui-btn db_upgrade">数据库升级</button>
             <button type="button" class="layui-btn clear CleanCache">清理缓存</button>
-            <button type="button" class="layui-btn" layuimini-content-href="root/sys_log" data-title="系统日志">系统日志</button>
-            <button type="button" class="layui-btn" layuimini-content-href="updatelog" data-title="更新日志">更新日志</button>
-            <button type="button" class="layui-btn" layuimini-content-href="root/import_data" data-title="导入数据">导入数据</button>
-            <button type="button" class="layui-btn" layuimini-content-href="root/mail_set" data-title="邮件配置">邮件配置</button>
+            <button type="button" class="layui-btn" layuimini-content-href="root/sys_log" data-title="系统日志">
+                系统日志
+            </button>
+            <button type="button" class="layui-btn" layuimini-content-href="updatelog" data-title="更新日志">更新日志
+            </button>
+            <button type="button" class="layui-btn" layuimini-content-href="root/import_data" data-title="导入数据">
+                导入数据
+            </button>
+            <button type="button" class="layui-btn" layuimini-content-href="root/mail_set" data-title="邮件配置">
+                邮件配置
+            </button>
         </div>
-        <pre class="layui-code" id="console_log" >
+        <pre class="layui-code" id="console_log">
 1.功能都集中在上方的按钮了,需要那个就点击那个!
 2.一键诊断和phpinfo用于帮助站长和开发者快速了解服务器环境
 3.生成伪静态(伪静态无需求可不设置,安全设置最好设置下)
@@ -44,82 +66,82 @@ require(dirname(__DIR__).'/header.php');
 </div>
 
 
-<script src = "<?php echo $libs;?>/jquery/jquery-3.6.0.min.js"></script>
-<script src = "./templates/admin/js/public.js?v=<?php echo $Ver;?>"></script>
-<script src = "<?php echo $libs?>/Other/ClipBoard.min.js"></script>
-<?php load_static('js');?>
+<script src="<?php echo $libs; ?>/jquery/jquery-3.6.0.min.js"></script>
+<script src="./templates/admin/js/public.js?v=<?php echo $Ver; ?>"></script>
+<script src="<?php echo $libs ?>/Other/ClipBoard.min.js"></script>
+<?php load_static('js'); ?>
 <script>
-layui.use(['layer','form','miniTab'], function () {
-    var $ = layui.jquery;
-    var form = layui.form;
-    var isSupported = ClipboardJS.isSupported();
-    var miniTab = layui.miniTab;
-    miniTab.listen();
-    //复制日志
-    $('.copy_log').on('click', function(){
-        if(isSupported){
-            ClipboardJS.copy($('#console_log').text());
-            layer.msg('复制成功', {icon: 1});
-        }else{
-            layer.msg('复制失败,浏览器不支持', {icon: 5});
-        }
-    });
-    //一键诊断
-    $('.diagnose').on('click', function(){
-        $("#console_log").text("");
-        $("#console_log").append("浏览器UA：" + navigator.userAgent +"\n");
-        $("#console_log").append("客户端时间：" +  timestampToTime(Math.round(new Date() / 1000) ) +"\n");
-        $.post(get_api('read_data','diagnostic_log'),function(data,status){
-            $("#console_log").append(data.msg);
-        });
-    });
-    
-    //phpinfo
-    $('.phpinfo').on('click', function(){
-        layer.open({
-            title: 'phpinfo',
-            type: 2,
-            scrollbar: false,
-            shade: 0.2,
-            maxmin:false,
-            shadeClose: true,
-            area: ['100%', '100%'],
-            content: get_api('read_data','phpinfo'),
-        });
-    });
-    //伪静态
-    $('.rewrite').on('click', function(){
-        let pathname = window.location.pathname;
-        $("#console_log").text("");
-        $("#console_log").append(`#安全设置\n`);
-        $("#console_log").append(`location ~* ^${pathname}(data|system|templates)/.*.(db|db3|php|sql|tar|gz|zip|info|log)$ {\n\treturn 403;\n}\n`);
-        $("#console_log").append(`#伪静态\n`);
-        $("#console_log").append(`rewrite ^${pathname}login$ ${pathname}index.php?c=login break;\n`);
-        $("#console_log").append(`rewrite ^${pathname}admin$ ${pathname}index.php?c=admin break;\n`);
-        $("#console_log").append(`rewrite ^${pathname}([A-Za-z0-9]+)$ ${pathname}index.php?u=$1 break; #HOST/USER\n`);
-        $("#console_log").append(`rewrite ^${pathname}(.+)/(click)/([A-Za-z0-9]+)$ ${pathname}index.php?c=$2&id=$3&u=$1 break;\n`);
-        $("#console_log").append(`rewrite ^${pathname}(.+)/(click)/(.+) ${pathname}$3 break; #static\n`);
-    });
-    //清理缓存
-    $('.CleanCache').on('click', function(){
-        $.post(get_api('other_root','CleanCache'),function(data,status){
-             if(data.code == 1){
-                layer.msg(data.msg,{icon: 1})
-            } else{
-                layer.msg(data.msg,{icon: 5});
+    layui.use(['layer', 'form', 'miniTab'], function () {
+        var $ = layui.jquery;
+        var form = layui.form;
+        var isSupported = ClipboardJS.isSupported();
+        var miniTab = layui.miniTab;
+        miniTab.listen();
+        //复制日志
+        $('.copy_log').on('click', function () {
+            if (isSupported) {
+                ClipboardJS.copy($('#console_log').text());
+                layer.msg('复制成功', {icon: 1});
+            } else {
+                layer.msg('复制失败,浏览器不支持', {icon: 5});
             }
         });
-    });
-    //数据库升级
-    $('.db_upgrade').on('click', function(){
-        $("#console_log").text("");
-        $("#console_log").append(`正在处理中,请勿操作页面...\n`);
-        $.post(get_api("other_upsys"),{"i":4,"pattern":"manual"}, function(data, status) {
+        //一键诊断
+        $('.diagnose').on('click', function () {
             $("#console_log").text("");
-            $("#console_log").append(`${data.msg}\n`);
+            $("#console_log").append("浏览器UA：" + navigator.userAgent + "\n");
+            $("#console_log").append("客户端时间：" + timestampToTime(Math.round(new Date() / 1000)) + "\n");
+            $.post(get_api('read_data', 'diagnostic_log'), function (data, status) {
+                $("#console_log").append(data.msg);
+            });
+        });
+
+        //phpinfo
+        $('.phpinfo').on('click', function () {
+            layer.open({
+                title: 'phpinfo',
+                type: 2,
+                scrollbar: false,
+                shade: 0.2,
+                maxmin: false,
+                shadeClose: true,
+                area: ['100%', '100%'],
+                content: get_api('read_data', 'phpinfo'),
+            });
+        });
+        //伪静态
+        $('.rewrite').on('click', function () {
+            let pathname = window.location.pathname;
+            $("#console_log").text("");
+            $("#console_log").append(`#安全设置\n`);
+            $("#console_log").append(`location ~* ^${pathname}(data|system|templates)/.*.(db|db3|php|sql|tar|gz|zip|info|log)$ {\n\treturn 403;\n}\n`);
+            $("#console_log").append(`#伪静态\n`);
+            $("#console_log").append(`rewrite ^${pathname}login$ ${pathname}index.php?c=login break;\n`);
+            $("#console_log").append(`rewrite ^${pathname}admin$ ${pathname}index.php?c=admin break;\n`);
+            $("#console_log").append(`rewrite ^${pathname}([A-Za-z0-9]+)$ ${pathname}index.php?u=$1 break; #HOST/USER\n`);
+            $("#console_log").append(`rewrite ^${pathname}(.+)/(click)/([A-Za-z0-9]+)$ ${pathname}index.php?c=$2&id=$3&u=$1 break;\n`);
+            $("#console_log").append(`rewrite ^${pathname}(.+)/(click)/(.+) ${pathname}$3 break; #static\n`);
+        });
+        //清理缓存
+        $('.CleanCache').on('click', function () {
+            $.post(get_api('other_root', 'CleanCache'), function (data, status) {
+                if (data.code == 1) {
+                    layer.msg(data.msg, {icon: 1})
+                } else {
+                    layer.msg(data.msg, {icon: 5});
+                }
+            });
+        });
+        //数据库升级
+        $('.db_upgrade').on('click', function () {
+            $("#console_log").text("");
+            $("#console_log").append(`正在处理中,请勿操作页面...\n`);
+            $.post(get_api("other_upsys"), {"i": 4, "pattern": "manual"}, function (data, status) {
+                $("#console_log").text("");
+                $("#console_log").append(`${data.msg}\n`);
+            });
         });
     });
-});
 </script>
 </body>
 </html>

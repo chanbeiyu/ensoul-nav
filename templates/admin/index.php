@@ -1,4 +1,8 @@
-<?php if(!defined('DIR')){header('HTTP/1.1 404 Not Found');header("status: 404 Not Found");exit;}?>
+<?php if (!defined('DIR')) {
+    header('HTTP/1.1 404 Not Found');
+    header("status: 404 Not Found");
+    exit;
+} ?>
 <!DOCTYPE html>
 <html>
 <head>
@@ -11,11 +15,11 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="format-detection" content="telephone=no">
-    <link rel="stylesheet" href="<?php echo $layui['css'];?>" media="all">
-    <link rel="stylesheet" href="./templates/admin/css/layuimini.css?v=<?php echo $Ver;?>" media="all">
-    <link rel="stylesheet" href="./templates/admin/css/themes/default.css?v=<?php echo $Ver;?>" media="all">
-    <link rel="stylesheet" href="<?php echo $libs?>/Font-awesome/4.7.0/css/font-awesome.css" media="all">
-    <link rel="shortcut icon" href="<?php echo $favicon;?>">
+    <link rel="stylesheet" href="<?php echo $layui['css']; ?>" media="all">
+    <link rel="stylesheet" href="./templates/admin/css/layuimini.css?v=<?php echo $Ver; ?>" media="all">
+    <link rel="stylesheet" href="./templates/admin/css/themes/default.css?v=<?php echo $Ver; ?>" media="all">
+    <link rel="stylesheet" href="<?php echo $libs ?>/Font-awesome/4.7.0/css/font-awesome.css" media="all">
+    <link rel="shortcut icon" href="<?php echo $favicon; ?>">
     <style id="layuimini-bg-color"></style>
 </head>
 <body class="layui-layout-body layuimini-all">
@@ -23,19 +27,30 @@
     <div class="layui-header header">
         <div class="layui-logo layuimini-logo"></div>
         <div class="layuimini-header-content">
-            <a><div class="layuimini-tool"><i title="左侧栏展开/收缩" class="fa fa-outdent" data-side-fold="1"></i></div></a>
+            <a>
+                <div class="layuimini-tool"><i title="左侧栏展开/收缩" class="fa fa-outdent" data-side-fold="1"></i>
+                </div>
+            </a>
             <ul class="layui-nav layui-layout-right">
-                <li class="layui-nav-item" lay-unselect><a href="javascript:;" data-refresh="刷新" title="刷新"><i class="fa fa-refresh"></i></a></li>
-                <li class="layui-nav-item mobile layui-hide-xs" lay-unselect><a href="javascript:;" title="全屏" data-check-screen="full"><i class="fa fa-arrows-alt"></i></a></li>
+                <li class="layui-nav-item" lay-unselect><a href="javascript:;" data-refresh="刷新" title="刷新"><i
+                            class="fa fa-refresh"></i></a></li>
+                <li class="layui-nav-item mobile layui-hide-xs" lay-unselect><a href="javascript:;" title="全屏"
+                                                                                data-check-screen="full"><i
+                            class="fa fa-arrows-alt"></i></a></li>
                 <li class="layui-nav-item layuimini-setting">
                     <a href="javascript:;">
                         <!--<img src="./templates/admin/img/head.jpg" class="layui-nav-img" width="50" height="50">-->
-                        <?php echo U;?></a>
+                        <?php echo U; ?></a>
                     <dl class="layui-nav-child">
-                        <dd><a href="javascript:;" layuimini-content-href="LoginDevice" data-title="登录设备">登录设备</a></dd>
-                        <dd><a href="javascript:;" layuimini-content-href="SecuritySetting" data-title="安全设置">安全设置</a></dd>
-                        <dd><a href="javascript:;" layuimini-content-href="UserPassword" data-title="修改密码">修改密码</a></dd>
-                        <dd><hr></dd>
+                        <dd><a href="javascript:;" layuimini-content-href="LoginDevice"
+                               data-title="登录设备">登录设备</a></dd>
+                        <dd><a href="javascript:;" layuimini-content-href="SecuritySetting"
+                               data-title="安全设置">安全设置</a></dd>
+                        <dd><a href="javascript:;" layuimini-content-href="UserPassword"
+                               data-title="修改密码">修改密码</a></dd>
+                        <dd>
+                            <hr>
+                        </dd>
                         <dd><a href="javascript:;" id="logout">退出登录</a></dd>
                     </dl>
                 </li>
@@ -52,7 +67,9 @@
     <!-- 移动导航 -->
     <div class="layui-body">
         <div class="layuimini-tab layui-tab-rollTool layui-tab" lay-filter="layuiminiTab" lay-allowclose="true">
-            <ul class="layui-tab-title"><li class="layui-this" id="layuiminiHomeTabId" lay-id=""></li></ul>
+            <ul class="layui-tab-title">
+                <li class="layui-this" id="layuiminiHomeTabId" lay-id=""></li>
+            </ul>
             <div class="layui-tab-control">
                 <li class="layuimini-tab-roll-left layui-icon layui-icon-left"></li>
                 <li class="layuimini-tab-roll-right layui-icon layui-icon-right"></li>
@@ -69,26 +86,28 @@
                     </ul>
                 </li>
             </div>
-            <div class="layui-tab-content"><div id="layuiminiHomeTabIframe" class="layui-tab-item layui-show"></div></div>
+            <div class="layui-tab-content">
+                <div id="layuiminiHomeTabIframe" class="layui-tab-item layui-show"></div>
+            </div>
         </div>
     </div>
 </div>
-<script src="<?php echo $layui['js'];?>" charset="utf-8"></script>
-<script src="./templates/admin/js/lay-config.js?v=<?php echo $Ver;?>" charset="utf-8"></script>
+<script src="<?php echo $layui['js']; ?>" charset="utf-8"></script>
+<script src="./templates/admin/js/lay-config.js?v=<?php echo $Ver; ?>" charset="utf-8"></script>
 <script>
-var u = "<?php echo U;?>"
-layui.config({version:"<?php echo $Ver;?>"});
-layui.use(['layer','miniAdmin'], function () {
-    var layer = layui.layer;
-    layui.miniAdmin.render({
-        iniUrl: "./index.php?c=admin&page=menu&u="+u,
-        urlHashLocation: true,
-        bgColorDefault: false,
-        menuChildOpen: true,
-        pageAnim: true,
-        maxTabNum: 30
+    var u = "<?php echo U;?>"
+    layui.config({version: "<?php echo $Ver;?>"});
+    layui.use(['layer', 'miniAdmin'], function () {
+        var layer = layui.layer;
+        layui.miniAdmin.render({
+            iniUrl: "./index.php?c=admin&page=menu&u=" + u,
+            urlHashLocation: true,
+            bgColorDefault: false,
+            menuChildOpen: true,
+            pageAnim: true,
+            maxTabNum: 30
+        });
     });
-});
 </script>
 </body>
 </html>

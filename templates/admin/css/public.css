@@ -2,8 +2,11 @@ body {
     margin: 5px 5px 5px 5px;
     background: #f2f2f2;
 }
+
 .layui-form-item .layui-input-company {
-    width: auto;padding-right: 10px;line-height: 38px;
+    width: auto;
+    padding-right: 10px;
+    line-height: 38px;
 }
 
 .layui-form-item .layui-input-inline {
@@ -15,10 +18,12 @@ body {
     border-radius: 5px;
     background-color: #ffffff
 }
+
 .layuimini-container .layuimini-btn-primary {
     color: #fff;
     background-color: #2c3e50;
 }
+
 .layuimini-main {
     margin: 10px 10px 10px 10px;
 }
@@ -72,7 +77,7 @@ body {
     border-radius: 2em
 }
 
-.layui-table-tool-temp{
+.layui-table-tool-temp {
     padding-right: 0px;
 }
 
@@ -82,32 +87,39 @@ body {
     .layui-form-mid {
         margin-left: 10px;
     }
+
     .layui-form-item .layui-input-inline {
         margin-right: 0px;
-        width:  calc(100% - 110px);
+        width: calc(100% - 110px);
     }
+
     /*手机端表单调整230410*/
-    .layui-form-label{
+    .layui-form-label {
         width: 60px;
         padding: 9px 9px;
     }
-    .layui-input-block{
-        margin-left: 85px; 
+
+    .layui-input-block {
+        margin-left: 85px;
     }
+
     /*隐藏描述*/
-    .layui-form-mid{
-        display:none
+    .layui-form-mid {
+        display: none
     }
+
     /*边距*/
     .layuimini-main {
         margin: 10px 5px 10px 0px;
     }
-    .layui-form-item{
+
+    .layui-form-item {
         margin-bottom: 8px;
     }
 }
-@media screen and (max-width: 450px){
-    .layui-form-item .layui-input-inline+.layui-form-mid {
+
+@media screen and (max-width: 450px) {
+    .layui-form-item .layui-input-inline + .layui-form-mid {
         margin-left: 10px;
     }
 }

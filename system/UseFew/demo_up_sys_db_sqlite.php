@@ -1,5 +1,9 @@
-<?php if(!defined('DIR')){header('HTTP/1.1 404 Not Found');header("status: 404 Not Found");exit;}
-$sql =<<<EOF
+<?php if (!defined('DIR')) {
+    header('HTTP/1.1 404 Not Found');
+    header("status: 404 Not Found");
+    exit;
+}
+$sql = <<<EOF
 CREATE TABLE IF NOT EXISTS "user_config2" (
   "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
   "uid" integer(10) NOT NULL,
@@ -10,8 +14,8 @@ CREATE TABLE IF NOT EXISTS "user_config2" (
   CONSTRAINT "id" UNIQUE ("id" ASC)
 );
 EOF;
-if(exe_sql($sql)){
-    insert_db('updatadb_logs',['file_name'=>$file_name,'update_time'=>time(),'status'=>'TRUE','extra'=>'']);
-}else{
-    msg(-1,'数据库更新失败');
+if (exe_sql($sql)) {
+    insert_db('updatadb_logs', ['file_name' => $file_name, 'update_time' => time(), 'status' => 'TRUE', 'extra' => '']);
+} else {
+    msg(-1, '数据库更新失败');
 }

@@ -1,14 +1,17 @@
 <?php
 //首字母头像
-output_ico(); 
- 
+output_ico();
+
 //输出svg图像
-function output_ico() {
+function output_ico()
+{
     //防盗链
-    if(empty($_SERVER['HTTP_REFERER']) || !strstr($_SERVER['HTTP_REFERER'],$_SERVER['HTTP_HOST'])){
-        header('HTTP/1.1 404 Not Found');header("status: 404 Not Found");exit('404 Not Found');
+    if (empty($_SERVER['HTTP_REFERER']) || !strstr($_SERVER['HTTP_REFERER'], $_SERVER['HTTP_HOST'])) {
+        header('HTTP/1.1 404 Not Found');
+        header("status: 404 Not Found");
+        exit('404 Not Found');
     }
-    
+
     $text = $_GET['text'] ?? '空';
     header('Cache-Control: max-age=604800');
     header('Content-Type:image/svg+xml');
@@ -16,7 +19,8 @@ function output_ico() {
 }
 
 
-function letter_avatar($text){
+function letter_avatar($text)
+{
     $total = unpack('L', hash('adler32', $text, true))[1];
     $hue = $total % 360;
     list($r, $g, $b) = hsv2rgb($hue / 360, 0.3, 0.9);
@@ -30,7 +34,8 @@ function letter_avatar($text){
 }
 
 
-function hsv2rgb($h, $s, $v){
+function hsv2rgb($h, $s, $v)
+{
     $r = $g = $b = 0;
     $i = floor($h * 6);
     $f = $h * 6 - $i;

@@ -297,7 +297,7 @@ layui.define(['laypage', 'form', 'jquery', 'layer'], function (exports) {
                         icon += '<i class="layui-icon ' + obj + '"></i>';
                     } else if (obj.indexOf("fa-") > -1) {
                         icon += '<i class="fa ' + obj + '"></i>';
-                    } else if (!obj){
+                    } else if (!obj) {
                         icon += '<i class="empty-icon" title="不选择">空</i>'
                     }
                     icon += '</div>';
@@ -411,7 +411,7 @@ layui.define(['laypage', 'form', 'jquery', 'layer'], function (exports) {
                         icon = '';
 
                     let classValue = el.attr('class');
-                    var clsArr = (classValue&&classValue.split(/[\s\n]/)) || [],
+                    var clsArr = (classValue && classValue.split(/[\s\n]/)) || [],
                         cls = clsArr[1] || '',
                         icon = cls;
                     $('#' + TITLE_ID).find('.layui-iconpicker-item .layui-iconpicker-icon i').html('').attr('class', clsArr.join(' '));
@@ -424,7 +424,7 @@ layui.define(['laypage', 'form', 'jquery', 'layer'], function (exports) {
                     // 回调
                     if (click) {
                         click({
-                            icon: clsArr[0]+' '+icon
+                            icon: clsArr[0] + ' ' + icon
                         });
                     }
                 });

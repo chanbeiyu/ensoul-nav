@@ -1,4 +1,8 @@
-<?php if(!defined('DIR')){header('HTTP/1.1 404 Not Found');header("status: 404 Not Found");exit;}?>
+<?php if (!defined('DIR')) {
+    header('HTTP/1.1 404 Not Found');
+    header("status: 404 Not Found");
+    exit;
+} ?>
 <!DOCTYPE html>
 <html>
 <head>
@@ -10,12 +14,12 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="format-detection" content="telephone=no">
-    <link rel="stylesheet" href="<?php echo $libs?>/Layui/v2.6.8/css/layui.css">
-    <link rel="stylesheet" href="<?php echo $libs?>/Other/login.css">
+    <link rel="stylesheet" href="<?php echo $libs ?>/Layui/v2.6.8/css/layui.css">
+    <link rel="stylesheet" href="<?php echo $libs ?>/Other/login.css">
     <link rel="shortcut icon" href="./favicon.ico" type="image/x-icon">
     <!--[if lt IE 9]>
-    <script src="<?php echo $libs?>/Other/html5.min.js"></script>
-    <script src="<?php echo $libs?>/Other/respond.min.js"></script>
+    <script src="<?php echo $libs ?>/Other/html5.min.js"></script>
+    <script src="<?php echo $libs ?>/Other/respond.min.js"></script>
     <![endif]-->
 </head>
 <body>
@@ -30,23 +34,23 @@
             <div class="center">
                 <div class="item">
                     <span class="icon icon-2"></span>
-                    <input type="text" name="User" lay-verify="required"  placeholder="请输入账号">
+                    <input type="text" name="User" lay-verify="required" placeholder="请输入账号">
                 </div>
 
                 <div class="item">
                     <span class="icon icon-3"></span>
-                    <input type="password" name="Password" lay-verify="required"  placeholder="请输入密码">
+                    <input type="password" name="Password" lay-verify="required" placeholder="请输入密码">
                     <span class="bind-password icon icon-4"></span>
                 </div>
 
             </div>
             <div class="tip">
-<?php
-    //若为默认值则显示注册入口
-    if($global_config['Register'] == 'register' && $global_config['RegOption'] > 0){
-        echo '<a href="./?c=register" class="forget">没有账号？立即注册</a>';
-    } 
-?>
+                <?php
+                //若为默认值则显示注册入口
+                if ($global_config['Register'] == 'register' && $global_config['RegOption'] > 0) {
+                    echo '<a href="./?c=register" class="forget">没有账号？立即注册</a>';
+                }
+                ?>
             </div>
             <div class="layui-form-item" style="text-align:center; width:100%;height:100%;margin:0px;">
                 <button class="login-btn" lay-submit="" lay-filter="login">登录</button>
@@ -55,13 +59,13 @@
     </div>
 </div>
 <div class="footer">
-     <?php echo $copyright.( !empty($ICP)?'<span class="padding-5">|</span>':'').$ICP; ?>
+    <?php echo $copyright . (!empty($ICP) ? '<span class="padding-5">|</span>' : '') . $ICP; ?>
 </div>
-<script src = "<?php echo $libs?>/jquery/jquery-3.6.0.min.js"></script>
-<script src = "<?php echo $libs?>/Layui/v2.6.8/layui.js"></script>
-<script src = '<?php echo $libs?>/jquery/jquery.md5.js'></script>
+<script src="<?php echo $libs ?>/jquery/jquery-3.6.0.min.js"></script>
+<script src="<?php echo $libs ?>/Layui/v2.6.8/layui.js"></script>
+<script src='<?php echo $libs ?>/jquery/jquery.md5.js'></script>
 <script>
-    layui.use(['form','jquery'], function () {
+    layui.use(['form', 'jquery'], function () {
         var $ = layui.jquery,
             form = layui.form,
             layer = layui.layer;
@@ -89,10 +93,10 @@
                 return false;
             }
             data.Password = $.md5(data.Password);
-            $.post('./index.php?c=<?php echo $c; ?>&u='+data.User,data,function(re,status){
-                if(re.code == 1) {
+            $.post('./index.php?c=<?php echo $c; ?>&u=' + data.User, data, function (re, status) {
+                if (re.code == 1) {
                     window.location.href = re.url;
-                }else{
+                } else {
                     layer.msg(re.msg, {icon: 5});
                 }
             });

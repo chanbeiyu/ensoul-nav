@@ -1,5 +1,9 @@
-<?php if(!defined('DIR')){header('HTTP/1.1 404 Not Found');header("status: 404 Not Found");exit;}
-$sql ="
+<?php if (!defined('DIR')) {
+    header('HTTP/1.1 404 Not Found');
+    header("status: 404 Not Found");
+    exit;
+}
+$sql = "
 ALTER DATABASE {$GLOBALS['db_config']['name']} DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
 ALTER TABLE global_config CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
 ALTER TABLE global_user CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
@@ -21,8 +25,8 @@ INSERT INTO `purview_list` (`code`, `name`, `description`) VALUES
 ('theme_in', '主题设置', '后台显示主题设置菜单'),
 ('theme_set', '主题配置', '允许自定义主题配置');
 ";
-if(exe_sql($sql)){
-    insert_db('updatadb_logs',['file_name'=>$file_name,'update_time'=>time(),'status'=>'TRUE','extra'=>'']);
-}else{
-    msg(-1,'数据库更新失败');
+if (exe_sql($sql)) {
+    insert_db('updatadb_logs', ['file_name' => $file_name, 'update_time' => time(), 'status' => 'TRUE', 'extra' => '']);
+} else {
+    msg(-1, '数据库更新失败');
 }

@@ -2,9 +2,11 @@
 .layui-layout-admin .layui-header {
     background-color: #1aa094 !important;
 }
+
 .layui-header > ul > .layui-nav-item.layui-this, .layuimini-tool i:hover {
     background-color: #197971 !important;
 }
+
 .layui-header .layuimini-header-content > ul > .layui-nav-item.layui-this, .layuimini-tool i:hover {
     background-color: #197971 !important;
 }
@@ -640,12 +642,12 @@
     color: #484545;
 }
 
-.layuimini-tab-make{
+.layuimini-tab-make {
     position: absolute;
     top: 36px;
     bottom: 0px;
     width: 100%;
-    background: rgb(255, 255, 255,0);
+    background: rgb(255, 255, 255, 0);
     padding: 0px;
     overflow: hidden;
 }
@@ -656,12 +658,12 @@
 }
 
 /**头部菜单字体间距*/
-.layui-layout-admin .layui-header .layuimini-header-menu.layuimini-pc-show,.layui-layout-admin .layui-header .layuimini-header-menu.layuimini-mobile-show {
+.layui-layout-admin .layui-header .layuimini-header-menu.layuimini-pc-show, .layui-layout-admin .layui-header .layuimini-header-menu.layuimini-mobile-show {
     letter-spacing: 1px;
 }
 
 /**左侧菜单更多下拉样式*/
-.layuimini-menu-left .layui-nav-more,.layuimini-menu-left-zoom .layui-nav-more {
+.layuimini-menu-left .layui-nav-more, .layuimini-menu-left-zoom .layui-nav-more {
     font-family: layui-icon !important;
     font-size: 12px;
     font-style: normal;
@@ -678,14 +680,15 @@
     margin-top: -6px !important;
 }
 
-.layuimini-menu-left-zoom.layui-nav .layui-nav-mored,.layuimini-menu-left-zoom.layui-nav-itemed>a .layui-nav-more{
-    margin-top: -9px!important;
+.layuimini-menu-left-zoom.layui-nav .layui-nav-mored, .layuimini-menu-left-zoom.layui-nav-itemed > a .layui-nav-more {
+    margin-top: -9px !important;
 }
 
-.layuimini-menu-left .layui-nav-more:before,.layuimini-menu-left-zoom .layui-nav-more:before {
+.layuimini-menu-left .layui-nav-more:before, .layuimini-menu-left-zoom .layui-nav-more:before {
     content: "\e61a";
 }
-.layuimini-menu-left .layui-nav-itemed > a > .layui-nav-more,.layuimini-menu-left-zoom .layui-nav-itemed > a > .layui-nav-more {
+
+.layuimini-menu-left .layui-nav-itemed > a > .layui-nav-more, .layuimini-menu-left-zoom .layui-nav-itemed > a > .layui-nav-more {
     transform: rotate(180deg);
     -ms-transform: rotate(180deg);
     -moz-transform: rotate(180deg);
@@ -693,10 +696,10 @@
     -o-transform: rotate(180deg);
     width: 12px;
     text-align: center;
-    border-style:none;
+    border-style: none;
 }
 
-.layuimini-menu-left .layui-nav-itemed > a > .layui-nav-more:before,.layuimini-menu-left-zoom .layui-nav-itemed > a > .layui-nav-more:before {
+.layuimini-menu-left .layui-nav-itemed > a > .layui-nav-more:before, .layuimini-menu-left-zoom .layui-nav-itemed > a > .layui-nav-more:before {
     content: '\e61a';
     background-color: transparent;
     display: inline-block;
@@ -704,7 +707,7 @@
 }
 
 /**修复左侧菜单字体不对齐的问题*/
-.layuimini-menu-left .layui-nav-item a .fa,.layuimini-menu-left .layui-nav-item a .layui-icon{
+.layuimini-menu-left .layui-nav-item a .fa, .layuimini-menu-left .layui-nav-item a .layui-icon {
     width: 20px;
 }
 
@@ -757,16 +760,17 @@
         left: 95px !important;
     }
 
-    .layuimini-pc-show{
+    .layuimini-pc-show {
         display: block;
     }
-    .layuimini-mobile-show{
+
+    .layuimini-mobile-show {
         display: none;
     }
 
     /**菜单缩放*/
-    .layuimini-mini .layuimini-menu-left .layui-nav-more,.layuimini-mini .layuimini-menu-left .layui-nav-child{
-        display: none!important;
+    .layuimini-mini .layuimini-menu-left .layui-nav-more, .layuimini-mini .layuimini-menu-left .layui-nav-child {
+        display: none !important;
     }
 }
 
@@ -790,12 +794,14 @@
         width: 100%;
     }
 
-    .layuimini-pc-show{
+    .layuimini-pc-show {
         display: none;
     }
-    .layuimini-mobile-show{
+
+    .layuimini-mobile-show {
         display: block;
     }
+
     .layuimini-header-content {
         left: 0;
     }
@@ -838,7 +844,7 @@
     }
 
     .layuimini-mini .layui-layout-admin .layui-body {
-        left: 0!important;
+        left: 0 !important;
         transition: left .2s;
         top: 0;
         z-index: 998;
@@ -866,7 +872,7 @@
     }
 }
 
-@media screen and (max-width: 550px){
+@media screen and (max-width: 550px) {
     /**头部右侧数据*/
     .layuimini-multi-module.layuimini-mini .layuimini-header-content .layui-layout-right {
         display: none;
@@ -875,8 +881,22 @@
 
 
 /**修改左侧栏宽度 */
-.layui-layout-admin .layui-side {width: 155px;}
-.layui-layout-admin .layui-logo {width: 155px;}
-.layui-body {left: 155px;}
-.layuimini-tool {left: 190px;}
-.layui-nav-tree {width: 155px;}
+.layui-layout-admin .layui-side {
+    width: 155px;
+}
+
+.layui-layout-admin .layui-logo {
+    width: 155px;
+}
+
+.layui-body {
+    left: 155px;
+}
+
+.layuimini-tool {
+    left: 190px;
+}
+
+.layui-nav-tree {
+    width: 155px;
+}

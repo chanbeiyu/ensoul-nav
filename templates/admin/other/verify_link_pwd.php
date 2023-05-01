@@ -1,5 +1,9 @@
-<?php if(!defined('DIR')){header('HTTP/1.1 404 Not Found');header("status: 404 Not Found");exit;}
-$tip = $verify_type == 'link_pwd'?'请输入链接密码':'请输入分类密码';
+<?php if (!defined('DIR')) {
+    header('HTTP/1.1 404 Not Found');
+    header("status: 404 Not Found");
+    exit;
+}
+$tip = $verify_type == 'link_pwd' ? '请输入链接密码' : '请输入分类密码';
 ?>
 <!DOCTYPE html>
 <html>
@@ -12,11 +16,11 @@ $tip = $verify_type == 'link_pwd'?'请输入链接密码':'请输入分类密码
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="format-detection" content="telephone=no">
-    <link rel="stylesheet" href="<?php echo $libs?>/Layui/v2.6.8/css/layui.css">
-    <link rel="stylesheet" href="<?php echo $libs?>/Other/login.css">
+    <link rel="stylesheet" href="<?php echo $libs ?>/Layui/v2.6.8/css/layui.css">
+    <link rel="stylesheet" href="<?php echo $libs ?>/Other/login.css">
     <!--[if lt IE 9]>
-    <script src="<?php echo $libs?>/Other/html5.min.js"></script>
-    <script src="<?php echo $libs?>/Other/respond.min.js"></script>
+    <script src="<?php echo $libs ?>/Other/html5.min.js"></script>
+    <script src="<?php echo $libs ?>/Other/respond.min.js"></script>
     <![endif]-->
 </head>
 <body>
@@ -31,7 +35,8 @@ $tip = $verify_type == 'link_pwd'?'请输入链接密码':'请输入分类密码
             <div class="center">
                 <div class="item">
                     <span class="icon icon-3"></span>
-                    <input type="password" name="Password" lay-verify="required" lay-reqtext="<?php echo $tip;?>" placeholder="<?php echo $tip;?>">
+                    <input type="password" name="Password" lay-verify="required" lay-reqtext="<?php echo $tip; ?>"
+                           placeholder="<?php echo $tip; ?>">
                     <span class="bind-password icon icon-4"></span>
                 </div>
             </div>
@@ -42,13 +47,13 @@ $tip = $verify_type == 'link_pwd'?'请输入链接密码':'请输入分类密码
     </div>
 </div>
 <div class="footer">
-     <?php echo $copyright.( !empty($ICP)?'<span class="padding-5">|</span>':'').$ICP; ?>
+    <?php echo $copyright . (!empty($ICP) ? '<span class="padding-5">|</span>' : '') . $ICP; ?>
 </div>
-<script src = "<?php echo $libs?>/jquery/jquery-3.6.0.min.js"></script>
-<script src = "<?php echo $libs?>/Layui/v2.6.8/layui.js"></script>
-<script src = '<?php echo $libs?>/jquery/jquery.md5.js'></script>
+<script src="<?php echo $libs ?>/jquery/jquery-3.6.0.min.js"></script>
+<script src="<?php echo $libs ?>/Layui/v2.6.8/layui.js"></script>
+<script src='<?php echo $libs ?>/jquery/jquery.md5.js'></script>
 <script>
-    layui.use(['form','jquery'], function () {
+    layui.use(['form', 'jquery'], function () {
         var $ = layui.jquery,
             form = layui.form,
             layer = layui.layer;
@@ -71,15 +76,16 @@ $tip = $verify_type == 'link_pwd'?'请输入链接密码':'请输入分类密码
                 return false;
             }
             data.id = '<?php echo $_GET['id']?>';
-            $.post('./index.php?c=verify&type=link_pwd&u=<?php echo U?>',data,function(re,status){
-                if(re.code == 1) {
-                    layer.msg('正在验证..', {icon: 16,shade: [0.1, '#f5f5f5'],scrollbar: false,offset: 'auto',time: 888,
-				        end: function() {
-					        window.location.reload();
-					        return false;
-				        }
-			        });
-                }else{
+            $.post('./index.php?c=verify&type=link_pwd&u=<?php echo U?>', data, function (re, status) {
+                if (re.code == 1) {
+                    layer.msg('正在验证..', {
+                        icon: 16, shade: [0.1, '#f5f5f5'], scrollbar: false, offset: 'auto', time: 888,
+                        end: function () {
+                            window.location.reload();
+                            return false;
+                        }
+                    });
+                } else {
                     layer.msg(re.msg, {icon: 5});
                 }
             });

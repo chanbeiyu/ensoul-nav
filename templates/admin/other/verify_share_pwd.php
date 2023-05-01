@@ -1,4 +1,8 @@
-<?php if(!defined('DIR')){header('HTTP/1.1 404 Not Found');header("status: 404 Not Found");exit;}?>
+<?php if (!defined('DIR')) {
+    header('HTTP/1.1 404 Not Found');
+    header("status: 404 Not Found");
+    exit;
+} ?>
 <!DOCTYPE html>
 <html>
 <head>
@@ -10,11 +14,11 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="format-detection" content="telephone=no">
-    <link rel="stylesheet" href="<?php echo $libs?>/Layui/v2.6.8/css/layui.css">
-    <link rel="stylesheet" href="<?php echo $libs?>/Other/login.css">
+    <link rel="stylesheet" href="<?php echo $libs ?>/Layui/v2.6.8/css/layui.css">
+    <link rel="stylesheet" href="<?php echo $libs ?>/Other/login.css">
     <!--[if lt IE 9]>
-    <script src="<?php echo $libs?>/Other/html5.min.js"></script>
-    <script src="<?php echo $libs?>/Other/respond.min.js"></script>
+    <script src="<?php echo $libs ?>/Other/html5.min.js"></script>
+    <script src="<?php echo $libs ?>/Other/respond.min.js"></script>
     <![endif]-->
 </head>
 <body>
@@ -29,7 +33,8 @@
             <div class="center">
                 <div class="item">
                     <span class="icon icon-3"></span>
-                    <input type="text" name="Password" lay-verify="required" lay-reqtext="请输入提取码" placeholder="请输入提取码" value="<?php echo $_GET['pwd'];?>">
+                    <input type="text" name="Password" lay-verify="required" lay-reqtext="请输入提取码"
+                           placeholder="请输入提取码" value="<?php echo $_GET['pwd']; ?>">
                     <span class="bind-password icon icon-4 icon-5"></span>
                 </div>
             </div>
@@ -40,12 +45,12 @@
     </div>
 </div>
 <div class="footer">
-     <?php echo $copyright.( !empty($ICP)?'<span class="padding-5">|</span>':'').$ICP; ?>
+    <?php echo $copyright . (!empty($ICP) ? '<span class="padding-5">|</span>' : '') . $ICP; ?>
 </div>
-<script src = "<?php echo $libs?>/jquery/jquery-3.6.0.min.js"></script>
-<script src = "<?php echo $libs?>/Layui/v2.6.8/layui.js"></script>
+<script src="<?php echo $libs ?>/jquery/jquery-3.6.0.min.js"></script>
+<script src="<?php echo $libs ?>/Layui/v2.6.8/layui.js"></script>
 <script>
-    layui.use(['form','jquery'], function () {
+    layui.use(['form', 'jquery'], function () {
         var $ = layui.jquery,
             form = layui.form,
             layer = layui.layer;
@@ -67,16 +72,17 @@
                 layer.msg('密码不能为空');
                 return false;
             }
-            
-            $.post('./index.php?c=verify&type=share_pwd&u=<?php echo U;?>&share=<?php echo $_GET['share'];?>',data,function(re,status){
-                if(re.code == 1) {
-                    layer.msg('正在提取..', {icon: 16,shade: [0.1, '#f5f5f5'],scrollbar: false,offset: 'auto',time: 888,
-				        end: function() {
-					        window.location.reload();
-					        return false;
-				        }
-			        });
-                }else{
+
+            $.post('./index.php?c=verify&type=share_pwd&u=<?php echo U;?>&share=<?php echo $_GET['share'];?>', data, function (re, status) {
+                if (re.code == 1) {
+                    layer.msg('正在提取..', {
+                        icon: 16, shade: [0.1, '#f5f5f5'], scrollbar: false, offset: 'auto', time: 888,
+                        end: function () {
+                            window.location.reload();
+                            return false;
+                        }
+                    });
+                } else {
                     layer.msg(re.msg, {icon: 5});
                 }
             });

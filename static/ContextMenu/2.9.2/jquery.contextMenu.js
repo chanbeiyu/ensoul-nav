@@ -176,7 +176,7 @@
                 } else {
                     // x and y are given (by mouse event)
                     var offsetParentOffset = opt.$menu.offsetParent().offset();
-                    offset = {top: y - offsetParentOffset.top, left: x -offsetParentOffset.left};
+                    offset = {top: y - offsetParentOffset.top, left: x - offsetParentOffset.left};
                 }
 
                 // correct offset if viewport demands it
@@ -281,7 +281,7 @@
                 var $this = $(this);
 
                 //Show browser context-menu when preShow returns false
-                if (e.data.events.preShow($this,e) === false) {
+                if (e.data.events.preShow($this, e) === false) {
                     return;
                 }
 
@@ -444,8 +444,8 @@
 
                 setTimeout(function () {
                     // If the click is not real, things break: https://github.com/swisnl/jQuery-contextMenu/issues/132
-                    if(fakeClick){
-                        if (root !== null && typeof root !== 'undefined' && root.$menu !== null  && typeof root.$menu !== 'undefined') {
+                    if (fakeClick) {
+                        if (root !== null && typeof root !== 'undefined' && root.$menu !== null && typeof root.$menu !== 'undefined') {
                             root.$menu.trigger('contextmenu:hide');
                         }
                         return;
@@ -474,8 +474,8 @@
                     }
 
                     if (root.hideOnSecondTrigger && triggerAction && root.$menu !== null && typeof root.$menu !== 'undefined') {
-                      root.$menu.trigger('contextmenu:hide');
-                      return;
+                        root.$menu.trigger('contextmenu:hide');
+                        return;
                     }
 
                     if (root.reposition && triggerAction) {
@@ -513,7 +513,7 @@
                         });
                     }
 
-                    if (root !== null && typeof root !== 'undefined' && root.$menu !== null  && typeof root.$menu !== 'undefined') {
+                    if (root !== null && typeof root !== 'undefined' && root.$menu !== null && typeof root.$menu !== 'undefined') {
                         root.$menu.trigger('contextmenu:hide');
                     }
                 }, 50);
@@ -545,8 +545,7 @@
                     } else {
                         if (target.offsetParent !== null && typeof target.offsetParent !== 'undefined') {
                             getZIndexOfTriggerTarget(target.offsetParent);
-                        }
-                        else if (target.parentElement !== null && typeof target.parentElement !== 'undefined') {
+                        } else if (target.parentElement !== null && typeof target.parentElement !== 'undefined') {
                             getZIndexOfTriggerTarget(target.parentElement);
                         }
                     }
@@ -555,7 +554,7 @@
                 // If targetZIndex is heigher then opt.zIndex dont progress any futher.
                 // This is used to make sure that if you are using a dialog with a input / textarea / contenteditable div
                 // and its above the contextmenu it wont steal keys events
-                if (opt.$menu && parseInt(targetZIndex,10) > parseInt(opt.$menu.css("zIndex"),10)) {
+                if (opt.$menu && parseInt(targetZIndex, 10) > parseInt(opt.$menu.css("zIndex"), 10)) {
                     return;
                 }
                 switch (e.keyCode) {
@@ -862,7 +861,7 @@
                     return;
                 }
 
-                if(opt && opt.$menu && opt.$menu.hasClass('context-menu-visible')){
+                if (opt && opt.$menu && opt.$menu.hasClass('context-menu-visible')) {
                     return;
                 }
 
@@ -878,7 +877,7 @@
                     callback;
 
                 // abort if the key is unknown or disabled or is a menu
-                if (!opt.items[key] || $this.is('.' + root.classNames.disabled + ', .context-menu-separator, .' + root.classNames.notSelectable) || ($this.is('.context-menu-submenu') && root.selectableSubMenu === false )) {
+                if (!opt.items[key] || $this.is('.' + root.classNames.disabled + ', .context-menu-separator, .' + root.classNames.notSelectable) || ($this.is('.context-menu-submenu') && root.selectableSubMenu === false)) {
                     return;
                 }
 
@@ -936,7 +935,7 @@
                 opt.$selected = root.$selected = $this;
 
 
-                if(opt && opt.$node && opt.$node.hasClass('context-menu-submenu')){
+                if (opt && opt.$node && opt.$node.hasClass('context-menu-submenu')) {
                     opt.$node.addClass(root.classNames.hover);
                 }
 
@@ -1121,7 +1120,7 @@
                     'contextMenu': opt,
                     'contextMenuRoot': root
                 });
-                if(opt.dataAttr){
+                if (opt.dataAttr) {
                     $.each(opt.dataAttr, function (key, item) {
                         opt.$menu.attr('data-' + opt.key, item);
                     });
@@ -1339,7 +1338,7 @@
                             if ($.isFunction(item.icon)) {
                                 item._icon = item.icon.call(this, this, $t, key, item);
                             } else {
-                                if (typeof(item.icon) === 'string' && (
+                                if (typeof (item.icon) === 'string' && (
                                     item.icon.substring(0, 4) === 'fab '
                                     || item.icon.substring(0, 4) === 'fas '
                                     || item.icon.substring(0, 4) === 'fad '
@@ -1349,14 +1348,14 @@
                                     // to enable font awesome
                                     $t.addClass(root.classNames.icon + ' ' + root.classNames.icon + '--fa5');
                                     item._icon = $('<i class="' + item.icon + '"></i>');
-                                } else if (typeof(item.icon) === 'string' && item.icon.substring(0, 3) === 'fa-') {
+                                } else if (typeof (item.icon) === 'string' && item.icon.substring(0, 3) === 'fa-') {
                                     item._icon = root.classNames.icon + ' ' + root.classNames.icon + '--fa fa ' + item.icon;
                                 } else {
                                     item._icon = root.classNames.icon + ' ' + root.classNames.icon + '-' + item.icon;
                                 }
                             }
 
-                            if(typeof(item._icon) === "string"){
+                            if (typeof (item._icon) === "string") {
                                 $t.addClass(item._icon);
                             } else {
                                 $t.prepend(item._icon);
@@ -1457,7 +1456,7 @@
                     if ($.isFunction(item.icon)) {
                         $item.removeClass(item._icon);
                         var iconResult = item.icon.call(this, $trigger, $item, key, item);
-                        if(typeof(iconResult) === "string"){
+                        if (typeof (iconResult) === "string") {
                             $item.addClass(iconResult);
                         } else {
                             $item.prepend(iconResult);
@@ -1575,20 +1574,20 @@
                 promise.then(completedPromise.bind(this, opt, root), errorPromise.bind(this, opt, root));
             },
             // operation that will run after contextMenu showed on screen
-            activated: function(opt){
+            activated: function (opt) {
                 var $menu = opt.$menu;
                 var $menuOffset = $menu.offset();
                 var winHeight = $(window).height();
                 var winScrollTop = $(window).scrollTop();
                 var menuHeight = $menu.height();
-                if(menuHeight > winHeight){
+                if (menuHeight > winHeight) {
                     $menu.css({
-                        'height' : winHeight + 'px',
+                        'height': winHeight + 'px',
                         'overflow-x': 'hidden',
                         'overflow-y': 'auto',
                         'top': winScrollTop + 'px'
                     });
-                } else if(($menuOffset.top < winScrollTop) || ($menuOffset.top + menuHeight > winScrollTop + winHeight)){
+                } else if (($menuOffset.top < winScrollTop) || ($menuOffset.top + menuHeight > winScrollTop + winHeight)) {
                     $menu.css({
                         'top': winScrollTop + 'px'
                     });
@@ -1685,11 +1684,11 @@
 
             case 'update':
                 // Updates visibility and such
-                if(_hasContext){
+                if (_hasContext) {
                     op.update($context);
                 } else {
-                    for(var menu in menus){
-                        if(menus.hasOwnProperty(menu)){
+                    for (var menu in menus) {
+                        if (menus.hasOwnProperty(menu)) {
                             op.update(menus[menu]);
                         }
                     }
@@ -1769,7 +1768,7 @@
                     case 'left':
                         $context.on('click' + o.ns, o.selector, o, handle.click);
                         break;
-				    case 'touchstart':
+                    case 'touchstart':
                         $context.on('touchstart' + o.ns, o.selector, o, handle.click);
                         break;
                     /*

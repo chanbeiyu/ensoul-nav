@@ -1,5 +1,9 @@
-<?php if(!defined('DIR')){header('HTTP/1.1 404 Not Found');header("status: 404 Not Found");exit;}
-$sql =<<<EOF
+<?php if (!defined('DIR')) {
+    header('HTTP/1.1 404 Not Found');
+    header("status: 404 Not Found");
+    exit;
+}
+$sql = <<<EOF
 DROP TABLE IF EXISTS `user_config2`;
 CREATE TABLE IF NOT EXISTS `user_config2` (
   `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -11,8 +15,8 @@ CREATE TABLE IF NOT EXISTS `user_config2` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
 EOF;
-if(exe_sql($sql)){
-    insert_db('updatadb_logs',['file_name'=>$file_name,'update_time'=>time(),'status'=>'TRUE','extra'=>'']);
-}else{
-    msg(-1,'数据库更新失败');
+if (exe_sql($sql)) {
+    insert_db('updatadb_logs', ['file_name' => $file_name, 'update_time' => time(), 'status' => 'TRUE', 'extra' => '']);
+} else {
+    msg(-1, '数据库更新失败');
 }

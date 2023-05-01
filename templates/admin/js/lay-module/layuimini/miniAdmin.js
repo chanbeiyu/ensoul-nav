@@ -1,4 +1,4 @@
-layui.define(["jquery", "miniMenu", "element","miniTab", "miniTheme"], function (exports) {
+layui.define(["jquery", "miniMenu", "element", "miniTab", "miniTheme"], function (exports) {
     var $ = layui.$,
         layer = layui.layer,
         miniMenu = layui.miniMenu,
@@ -118,7 +118,7 @@ layui.define(["jquery", "miniMenu", "element","miniTab", "miniTheme"], function 
                 el.msExitFullscreen();
             } else if (el.oRequestFullscreen) {
                 el.oCancelFullScreen();
-            }else if (el.mozCancelFullScreen) {
+            } else if (el.mozCancelFullScreen) {
                 el.mozCancelFullScreen();
             } else if (el.webkitCancelFullScreen) {
                 el.webkitCancelFullScreen();
@@ -161,12 +161,12 @@ layui.define(["jquery", "miniMenu", "element","miniTab", "miniTheme"], function 
         // 监听
         listen: function () {
             //刷新
-            $('body').on('click','[data-refresh]', function () {
+            $('body').on('click', '[data-refresh]', function () {
                 $(".layui-tab-item.layui-show").find("iframe")[0].contentWindow.location.reload();
                 miniAdmin.success('刷新成功');
             });
             //全屏
-            $('body').on('click','[data-check-screen]', function () {
+            $('body').on('click', '[data-check-screen]', function () {
                 var check = $(this).attr('data-check-screen');
                 if (check == 'full') {
                     miniAdmin.fullScreen();
@@ -179,22 +179,22 @@ layui.define(["jquery", "miniMenu", "element","miniTab", "miniTheme"], function 
                 }
             });
             //点击遮罩层
-            $('body').on('click','.layuimini-make', function () {
+            $('body').on('click', '.layuimini-make', function () {
                 miniAdmin.renderDevice();
             });
             //退出登录
             $('#logout').on("click", function () {
-                $.post('./index.php?c=admin&page=logout&u='+u,function(d,status){
-                    if(d.code == 1) {
+                $.post('./index.php?c=admin&page=logout&u=' + u, function (d, status) {
+                    if (d.code == 1) {
                         layer.alert("您已安全的退出登录!", function () {
-                            top.location.href='./index.php?u='+u;
+                            top.location.href = './index.php?u=' + u;
                         });
-                    }else{
-                        layer.msg(d.msg,{icon: 5});
+                    } else {
+                        layer.msg(d.msg, {icon: 5});
                     }
                 });
             });
         }
     };
-    exports("miniAdmin",miniAdmin);
+    exports("miniAdmin", miniAdmin);
 });
