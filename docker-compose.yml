@@ -1,7 +1,7 @@
 version: '3'
 
 services:
-  onenav:
+  ensoul-nav:
     image: findstay/ensoul-nav:latest
     container_name: ensoul-nav
     privileged: true
@@ -9,9 +9,7 @@ services:
     ports:
       - "9000:9000"
     volumes:
-      - './:/app'
-      # - '${WEBAPP_STORAGE_HOME}/:/app'
+      - './:/var/www/html'
     environment:
       TZ: Asia/Shanghai
 
-# https://gitee.com/tznb/TwoNav
