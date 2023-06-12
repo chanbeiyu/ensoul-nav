@@ -1,0 +1,18 @@
+{
+  "name": "小呆导航",
+  "description": "小呆导航",
+  "homepage": "https://github.com/xiaodai945/WEBJIKE",
+  "version": "2.0.0",
+  "update": "2023/03/15",
+  "author": "小呆",
+  "screenshot": "https://s3.bmp.ovh/imgs/2022/04/17/917c6d8f70765286.jpg",
+  "config": {
+    "location": 2,
+    "Notice": 1,
+    "NoticeC": ""
+  },
+  "support": {
+    "subitem": 0,
+    "category_svg": 0
+  }
+}

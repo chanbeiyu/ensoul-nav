@@ -1,0 +1,15 @@
+{
+  "name": "BM快捷导航",
+  "description": "用vue3+tailwindcss开发，支持响应式",
+  "homepage": "https://toscode.gitee.com/robin901118/homepage_navigation/tree/master/",
+  "version": "2.0.0",
+  "original_version": "3.3.5",
+  "update": "2023/03/15",
+  "author": "robin901118",
+  "screenshot": "https://s3.uuu.ovh/imgs/2022/10/18/65536c3a60166f9a.jpg",
+  "desc": "该主题使用大图标显示,建议将图标API设为api.iowen.cn显示效果更佳!",
+  "support": {
+    "subitem": 0,
+    "category_svg": 0
+  }
+}

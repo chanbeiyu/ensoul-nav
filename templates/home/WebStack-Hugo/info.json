@@ -1,0 +1,38 @@
+{
+  "name": "WebStack-Hugo",
+  "description": "WebStack-Hugo",
+  "homepage": "https://gitee.com/shenweiyan/WebStack-Hugo",
+  "version": "2.0.6",
+  "update": "2023/04/26",
+  "author": "沈维燕(shenweiyan)",
+  "screenshot": "https://img.lm21.top/WebStack-Hugo.jpg",
+  "config": {
+    "hover_tip": 1,
+    "search_bookmark": 1,
+    "search-modal": 1,
+    "qweather": 1,
+    "hitokoto": 1,
+    "search-bg": 1,
+    "suggestion": 1,
+    "sidebar-nav": 1,
+    "lazyload": 1,
+    "hide-category": 1,
+    "hide-description": 0,
+    "font-size": 14,
+    "NightMode": 0,
+    "navbar-link": "<li ><a href=\"https://github.com/tznb1/TwoNav\"><i class=\"fa fa-github icon-fw mr-2\"></i><span> 关于本站</span></a></li>",
+    "friend-link": "<a href=\"https://gitee.com/tznb/TwoNav\" title=\"TwoNav\" target=\"_blank\">TwoNav</a>",
+    "header_code": "",
+    "light_bg": "./templates/home/WebStack-Hugo/assets/images/bg-dna.jpg",
+    "night_bg": "",
+    "bg": "white-bg",
+    "bg_img": "",
+    "logo_light": "",
+    "logo_dark": "",
+    "logo_collapsed": ""
+  },
+  "support": {
+    "subitem": 0,
+    "category_svg": 0
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "name": "所长导航 Mini",
+  "description": "主打简洁搜索,仅显示指定的一个分类",
+  "homepage": "https://github.com/liutongxu/liutongxu.github.io/tree/main/nav",
+  "version": "2.0.0",
+  "update": "2023/04/10",
+  "author": "liutongxu",
+  "screenshot": "https://img.lm21.top/snail-nav.jpg",
+  "svg": "https://www.iconfont.cn/collections/detail?spm=a313x.7781069.0.da5a778a4&cid=10043",
+  "config": {
+    "qweather": 0,
+    "suggestion": 0,
+    "bg_img": ""
+  },
+  "support": {
+    "subitem": 0,
+    "category_svg": 0
+  }
+}

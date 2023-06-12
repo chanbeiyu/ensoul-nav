@@ -1,0 +1,19 @@
+{
+  "name": "heimdall",
+  "description": "此主题来源于独立导航程序Heimdall，由xiaoz适配到OneNav，该主题非常适合少量书签的NAS用户。",
+  "homepage": "https://github.com/linuxserver/Heimdall",
+  "version": "2.0.1",
+  "original_version": "1.0.2",
+  "update": "2023/03/16",
+  "author": "xiaoz",
+  "screenshot": "https://img.rss.ink/imgs/2022/11/30/4b0916bf3472861a.png",
+  "desc": "建议将图标API设为api.iowen.cn显示效果更佳!适合少量书签的NAS用户",
+  "config": {
+    "default_category_id": 0,
+    "default_search": "baidu"
+  },
+  "support": {
+    "subitem": 0,
+    "category_svg": 0
+  }
+}

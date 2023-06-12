@@ -1,0 +1,24 @@
+{
+  "name": "百素Two",
+  "description": "百素Two",
+  "homepage": "https://gitee.com/baisucode/baisu-two",
+  "version": "2.0.0",
+  "update": "2023/03/15",
+  "author": "百素",
+  "screenshot": "https://s3.bmp.ovh/imgs/2022/04/17/d61ffc0d58b8094b.jpg",
+  "config": {
+    "describe": 0,
+    "search_url": 0,
+    "open_with": 0,
+    "search": 1,
+    "search_bookmark": 1,
+    "weather": 1,
+    "date": 1,
+    "logo_url": "",
+    "search_background_url": ""
+  },
+  "support": {
+    "subitem": 1,
+    "category_svg": 0
+  }
+}
