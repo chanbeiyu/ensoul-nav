@@ -1,0 +1,8 @@
+- name: HCLonely Blog
+  url: https://blog.hclonely.com/
+  img: /images/logos/myBlog.png
+  description: 一个懒人的博客。
+- name: Github
+  url: https://github.com/
+  img: /images/logos/github.png
+  description: 面向开源及私有软件项目的托管平台。
